@@ -86,9 +86,9 @@ unsigned int sleep_ms;
 bool circ_ready;
 
 static spice_probe_settings_t probe_settings =
-    {
-        .rd = 15.0f,
-        .rp = 15.0f,
+{
+    .rd = 15.0f,
+    .rp = 15.0f,
 };
 static char **dut;
 
