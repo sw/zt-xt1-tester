@@ -7,7 +7,7 @@ enable_language(CXX)
 
 # Add project sources
 list(APPEND SOURCES
-    ${CMAKE_SOURCE_DIR}/src/foo.c
+    ${CMAKE_SOURCE_DIR}/src/bjt.c
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Test")
