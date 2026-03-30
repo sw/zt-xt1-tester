@@ -1,0 +1,63 @@
+{
+    "buildPresets": [
+        {
+            "configurePreset": "Test",
+            "name": "Test"
+        }
+    ],
+    "configurePresets": [
+        {
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "generator": "Ninja",
+            "hidden": true,
+            "name": "common"
+        },
+        {
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
+            "inherits": "common",
+            "name": "Debug"
+        },
+        {
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "inherits": "common",
+            "name": "Release"
+        },
+        {
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Test"
+            },
+            "inherits": "common",
+            "name": "Test"
+        }
+    ],
+    "testPresets": [
+        {
+            "configurePreset": "Test",
+            "name": "Test"
+        }
+    ],
+    "version": 6,
+    "workflowPresets": [
+        {
+            "name": "Test",
+            "steps": [
+                {
+                    "name": "Test",
+                    "type": "configure"
+                },
+                {
+                    "name": "Test",
+                    "type": "build"
+                },
+                {
+                    "name": "Test",
+                    "type": "test"
+                }
+            ]
+        }
+    ]
+}

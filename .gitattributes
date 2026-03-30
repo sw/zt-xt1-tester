@@ -1,0 +1,10 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+*.c text
+*.cmake text
+*.h text
+*.json text
+*.md text
+*.s text
+*.svd text
+*.txt text

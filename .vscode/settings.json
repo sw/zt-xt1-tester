@@ -1,0 +1,11 @@
+{
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "cmake.options.advanced": {
+        "configurePreset": {
+            "statusBarVisibility": "visible"
+        }
+    },
+    "cmake.useCMakePresets": "always",
+    "cortex-debug.gdbPath.linux": "gdb-multiarch",
+    "cortex-debug.objdumpPath.linux": "arm-none-eabi-objdump"
+}

@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "cwd": "${workspaceFolder}",
+            "executable": "${command:cmake.launchTargetPath}",
+            "interface": "swd",
+            "name": "Launch PyOCD",
+            "request": "launch",
+            "runToEntryPoint": "main",
+            "servertype": "pyocd",
+            "showDevDebugOutput": "raw",
+            "svdFile": "svd/N32G031.svd",
+            "targetId": "n32g031c8",
+            "type": "cortex-debug"
+        }
+    ],
+    "version": "0.2.0"
+}
