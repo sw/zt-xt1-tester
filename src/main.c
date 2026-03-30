@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdint.h>
+#include "n32g031_iwdg.h"
 #include "n32g031_rcc.h"
 #include "n32g031_tim.h"
 #include "n32g031_usart.h"
+#include "adc.h"
+#include "tool.h"
 
 static void clock_enable(void)
 {
@@ -22,16 +25,37 @@ static void clock_enable(void)
     RCC_EnableAPB2PeriphClk(RCC_APB2_PERIPH_USART1 | RCC_APB2_PERIPH_TIM8 | RCC_APB2_PERIPH_TIM1, ENABLE);
 }
 
+static void tim3_init(void)
+{
+    TIM_TimeBaseInitType TIM_TimeBaseInitStruct;
+    NVIC_InitType NVIC_InitStruct;
+    
+    TIM_TimeBaseInitStruct.Prescaler = 0;
+    TIM_TimeBaseInitStruct.CntMode = TIM_CNT_MODE_UP;
+    TIM_TimeBaseInitStruct.Period = 0xffff;
+    TIM_TimeBaseInitStruct.ClkDiv = TIM_CLK_DIV1;
+    TIM_TimeBaseInitStruct.CapCh3FromCompEn = true;
+    /* TODO: some fields not initialized??? */
+    TIM_InitTimeBase(TIM3, &TIM_TimeBaseInitStruct);
+    TIM_ConfigInt(TIM3, TIM_INT_UPDATE, ENABLE);
+    TIM_Enable(TIM3, ENABLE);
+
+    NVIC_InitStruct.NVIC_IRQChannel = TIM3_IRQn;
+    NVIC_InitStruct.NVIC_IRQChannelPriority = 1;
+    NVIC_InitStruct.NVIC_IRQChannelCmd = 1;
+    NVIC_Init(&NVIC_InitStruct);
+}
+
 static void tim6_init(void)
 {
-  TIM_TimeBaseInitType TIM_TimeBaseInitStruct; 
-  TIM_DeInit(TIM6);
-  TIM_TimeBaseInitStruct.Period = 0xffff;
-  TIM_TimeBaseInitStruct.ClkDiv = TIM_CLK_DIV1;
-  TIM_TimeBaseInitStruct.Prescaler = 48 - 1;
-  TIM_TimeBaseInitStruct.CntMode = TIM_CNT_MODE_UP;
-  TIM_InitTimeBase(TIM6, &TIM_TimeBaseInitStruct);
-  TIM_Enable(TIM6, ENABLE);
+    TIM_TimeBaseInitType TIM_TimeBaseInitStruct; 
+    TIM_DeInit(TIM6);
+    TIM_TimeBaseInitStruct.Period = 0xffff;
+    TIM_TimeBaseInitStruct.ClkDiv = TIM_CLK_DIV1;
+    TIM_TimeBaseInitStruct.Prescaler = 48 - 1;
+    TIM_TimeBaseInitStruct.CntMode = TIM_CNT_MODE_UP;
+    TIM_InitTimeBase(TIM6, &TIM_TimeBaseInitStruct);
+    TIM_Enable(TIM6, ENABLE);
 }
 
 static void uart_init(void)
@@ -98,11 +122,45 @@ static void uart_init(void)
     */
 }
 
+static void iwdg_setup(void)
+{
+    IWDG_WriteConfig(IWDG_WRITE_ENABLE);
+    IWDG_SetPrescalerDiv(IWDG_PRESCALER_DIV32);
+    IWDG_CntReload(2500);
+    IWDG_ReloadKey();
+    IWDG_Enable();
+    /* TODO: write disable? */
+}
+
+volatile uint32_t mainloop_seconds;
+tool_t tool;
+float calib_rp = 15;
+float calib_rd = 15;
+float result_hfe;
+float result_ic;
+float result_ube;
+unsigned int result_subtype;
+unsigned int result_probes[3];
+
 int main(void)
 {
     clock_enable();
     tim6_init();
     uart_init();
+    adc_init();
+    tim3_init();
+    /* TODO: calibration data handling */
+    iwdg_setup();
+    SysTick_Config(SystemCoreClock / 100);
+    while (true)
+    {
+        do
+        {
+            IWDG_ReloadKey();
+        } while (mainloop_seconds == 0);
+        mainloop_seconds = 0;
+        tool_do();
+    }
 }
 
 #ifdef USE_FULL_ASSERT

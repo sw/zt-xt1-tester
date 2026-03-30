@@ -4,13 +4,13 @@
 #include "probes.h"
 #include "timer.h"
 
-float calib_rp = 15;
-float calib_rd = 15;
-float result_hfe;
-float result_ic;
-float result_ube;
-unsigned int result_subtype;
-unsigned int result_probes[3];
+extern float calib_rp;
+extern float calib_rd;
+extern float result_hfe;
+extern float result_ic;
+extern float result_ube;
+extern unsigned int result_subtype;
+extern unsigned int result_probes[3];
 
 static bool bjt_npn(unsigned int p0, unsigned int p1, unsigned int p2)
 {
