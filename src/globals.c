@@ -1,5 +1,7 @@
 #include "globals.h"
 
+uart_frame_rx_t uart_frame_rx;
+uart_frame_tx_t uart_frame_tx;
 tool_t tool;
 float calib_rp = 15;
 float calib_rd = 15;

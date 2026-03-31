@@ -38,6 +38,7 @@ else()
         ${CMAKE_SOURCE_DIR}/src/gpio.c
         ${CMAKE_SOURCE_DIR}/src/main.c
         ${CMAKE_SOURCE_DIR}/src/n32g031_it.c
+        ${CMAKE_SOURCE_DIR}/src/uart.c
     )
     add_executable(${PROJECT_NAME} ${SOURCES})
 
