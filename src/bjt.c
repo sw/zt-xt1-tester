@@ -19,15 +19,15 @@ static bool bjt_npn(unsigned int p0, unsigned int p1, unsigned int p2)
     float u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
     float u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f;
     printf("U0=%.2fV U1=%.2fV U2=%.2fV\n", u0, u1, u2);
-    float ib = (5.0f - u0) / (470000.0f + calib_rp);
-    printf("Ib = (5V - %.2fV) / (470kohm + %.0fohm) = %.2fuA\n", u0, calib_rp, ib * 1e6f);
-    float ic = (5.0f - u1) / (680.0f + calib_rp);
-    printf("Ic = (5V - %.2fV) / (680ohm + %.0fohm) = %.2fmA\n", u1, calib_rp, ic * 1000.0f);
-    result_hfe = ic / ib;
-    printf("hFE = %.1f\n", result_hfe);
-    result_ube = u0 - u2;
-    printf("Ube = %.3fV - %.3fV = %.3fV\n", u0, u2, result_ube);
-    if ((result_ube > 0.9f) || (result_hfe > 600.0f) || (u1 > 4.95f))
+    float ib = (5.0f - u0) / (470000.0f + calibration.rp);
+    printf("Ib = (5V - %.2fV) / (470kohm + %.0fohm) = %.2fuA\n", u0, calibration.rp, ib * 1e6f);
+    float ic = (5.0f - u1) / (680.0f + calibration.rp);
+    printf("Ic = (5V - %.2fV) / (680ohm + %.0fohm) = %.2fmA\n", u1, calibration.rp, ic * 1e3f);
+    result.hfe = ic / ib;
+    printf("hFE = %.1f\n", result.hfe);
+    result.ube = u0 - u2;
+    printf("Ube = %.3fV - %.3fV = %.3fV\n", u0, u2, result.ube);
+    if ((result.ube > 0.9f) || (result.hfe > 600.0f) || (u1 > 4.95f))
     {
         return false;
     }
@@ -37,9 +37,9 @@ static bool bjt_npn(unsigned int p0, unsigned int p1, unsigned int p2)
     probe_configure(p2, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     msleep(1);
     u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-    result_ic = (5.0f - u1) / (470000.0f + calib_rp);
-    printf("Ic = (5V - %fV) / (470kohm + %.0fohm) = %.1fuA\n", u1, calib_rp, result_ic * 1e6f);
-    if ((result_ic > 0.0005f) || (u1 < 4.5f))
+    result.ic_mA = (5.0f - u1) / (470000.0f + calibration.rd) * 1e3f;
+    printf("Ic = (5V - %fV) / (470kohm + %.0fohm) = %.1fuA\n", u1, calibration.rd, result.ic_mA * 1e3f);
+    if ((result.ic_mA > 0.5f) || (u1 < 4.5f))
     {
         return false;
     }
@@ -60,7 +60,7 @@ static bool bjt_npn(unsigned int p0, unsigned int p1, unsigned int p2)
     u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
     u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f;
     printf("U? = %.2fV - %.2fV = %.2fV\n", u2, u1, u2 - u1);
-    result_subtype = 1;
+    result.subtype = 1;
     return true;
 }
 
@@ -77,15 +77,15 @@ static bool bjt_pnp(unsigned int p0, unsigned int p1, unsigned int p2)
     float u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
     float u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f;
     printf("U0=%.2fV U1=%.2fV U2=%.2fV\n", u0, u1, u2);
-    float ib = u0 / (470000.0f + calib_rd);
-    printf("Ib = %.2fV / (470kohm + %.0fohm) = %.2fuA\n", u0, calib_rd, ib * 1e6f);
-    float ic = u1 / (680.0f + calib_rd);
-    printf("Ic = %.2fV / (680ohm + %.0fohm) = %.2fmA\n", u1, calib_rd, ic * 1000.0f);
-    result_hfe = ic / ib;
-    printf("hFE = %.1f\n", result_hfe);
-    result_ube = u2 - u0;
-    printf("Ube = %.3fV - %.3fV = %.3fV\n", u2, u0, result_ube);
-    if ((result_ube > 0.9f) || (result_hfe > 600.0f) || (u0 > 4.95))
+    float ib = u0 / (470000.0f + calibration.rd);
+    printf("Ib = %.2fV / (470kohm + %.0fohm) = %.2fuA\n", u0, calibration.rd, ib * 1e6f);
+    float ic = u1 / (680.0f + calibration.rd);
+    printf("Ic = %.2fV / (680ohm + %.0fohm) = %.2fmA\n", u1, calibration.rd, ic * 1e3f);
+    result.hfe = ic / ib;
+    printf("hFE = %.1f\n", result.hfe);
+    result.ube = u2 - u0;
+    printf("Ube = %.3fV - %.3fV = %.3fV\n", u2, u0, result.ube);
+    if ((result.ube > 0.9f) || (result.hfe > 600.0f) || (u0 > 4.95))
     {
         return false;
     }
@@ -94,9 +94,9 @@ static bool bjt_pnp(unsigned int p0, unsigned int p1, unsigned int p2)
     probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
     probe_configure(p2, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
     u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-    result_ic = u1 / (470000.0f + calib_rd);
-    printf("Ic = %fV / (470kohm + %.0fohm) = %.1fuA\n", u1, calib_rd, result_ic * 1e6f);
-    if ((result_ic > 0.0005f) || (u1 > 0.5f))
+    result.ic_mA = u1 / (470000.0f + calibration.rd) * 1e3f;
+    printf("Ic = %fV / (470kohm + %.0fohm) = %.1fuA\n", u1, calibration.rd, result.ic_mA * 1e3f);
+    if ((result.ic_mA > 0.5f) || (u1 > 0.5f))
     {
         return false;
     }
@@ -117,7 +117,7 @@ static bool bjt_pnp(unsigned int p0, unsigned int p1, unsigned int p2)
     u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
     u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f;
     printf("U? = %.2fV - %.2fV = %.2fV\n", u1, u2, u1 - u2);
-    result_subtype = 2;
+    result.subtype = 2;
     return true;
 }
 
@@ -141,9 +141,9 @@ bool bjt(void)
     {
         if (bjt_npn(probes[i][0], probes[i][1], probes[i][2]))
         {
-            if (npn_max < result_hfe)
+            if (npn_max < result.hfe)
             {
-                npn_max = result_hfe;
+                npn_max = result.hfe;
                 npn_idx = i;
             }
         }
@@ -152,9 +152,9 @@ bool bjt(void)
     {
         if (bjt_pnp(probes[i][0], probes[i][1], probes[i][2]))
         {
-            if (pnp_max < result_hfe)
+            if (pnp_max < result.hfe)
             {
-                pnp_max = result_hfe;
+                pnp_max = result.hfe;
                 pnp_idx = i;
             }
         }
@@ -165,19 +165,19 @@ bool bjt(void)
         return false;
     }
 
-    if (result_subtype == 1)
+    if (result.subtype == 1)
     {
         if (!bjt_npn(probes[npn_idx][0], probes[npn_idx][1], probes[npn_idx][2]))
         {
             return false;
         }
-        result_probes[0] = probes[npn_idx][0];
-        result_probes[1] = probes[npn_idx][1];
-        result_probes[2] = probes[npn_idx][2];
+        result.probes[0] = probes[npn_idx][0];
+        result.probes[1] = probes[npn_idx][1];
+        result.probes[2] = probes[npn_idx][2];
         printf("NPN BJT found: B=%d C=%d E=%d\n",
-               result_probes[0] + 1,
-               result_probes[1] + 1,
-               result_probes[2] + 1);
+               result.probes[0] + 1,
+               result.probes[1] + 1,
+               result.probes[2] + 1);
     }
     else
     {
@@ -185,13 +185,13 @@ bool bjt(void)
         {
             return false;
         }
-        result_probes[0] = probes[pnp_idx][0];
-        result_probes[1] = probes[pnp_idx][1];
-        result_probes[2] = probes[pnp_idx][2];
+        result.probes[0] = probes[pnp_idx][0];
+        result.probes[1] = probes[pnp_idx][1];
+        result.probes[2] = probes[pnp_idx][2];
         printf("PNP BJT found: B=%d C=%d E=%d\n",
-               result_probes[0] + 1,
-               result_probes[1] + 1,
-               result_probes[2] + 1);
+               result.probes[0] + 1,
+               result.probes[1] + 1,
+               result.probes[2] + 1);
     }
 
     return true;

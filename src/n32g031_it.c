@@ -33,6 +33,7 @@
  * @copyright Copyright (c) 2019, Nations Technologies Inc. All rights reserved.
  */
 #include "n32g031_it.h"
+#include "globals.h"
 
 /** @addtogroup N32G031_StdPeriph_Template
  * @{
@@ -79,6 +80,11 @@ void PendSV_Handler(void)
  */
 void SysTick_Handler(void)
 {
+    if (++mainloop_centiseconds >= 100)
+    {
+        mainloop_centiseconds = 0;
+        mainloop_seconds++;
+    }
 }
 
 /**
@@ -96,11 +102,18 @@ void DMA_IRQ_HANDLER(void)
 /******************************************************************************/
 
 /**
- * @brief  This function handles PPP interrupt request.
+ * @brief  This function handles USART1 interrupt request.
  */
-/*void PPP_IRQHandler(void)
+void USART1_IRQHandler(void)
 {
-}*/
+    if (USART_GetIntStatus(USART1, USART_INT_IDLEF) == SET)
+    {
+        USART_ReceiveData(USART1);
+        DMA_EnableChannel(DMA_CH5, DISABLE);
+        uart_rx_len = DMA_GetCurrDataCounter(DMA_CH5);
+        uart_rx_pending = true;
+    }
+}
 
 /**
  * @}

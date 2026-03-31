@@ -1,6 +1,6 @@
 #pragma once
 
-typedef enum
+typedef enum : uint8_t
 {
     TOOL_NONE           = 0,
     TOOL_RESISTOR       = 1,

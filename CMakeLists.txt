@@ -34,6 +34,7 @@ else()
     # Target-specific sources not included in test build
     list(APPEND SOURCES
         ${CMAKE_SOURCE_DIR}/src/adc.c
+        ${CMAKE_SOURCE_DIR}/src/calib.c
         ${CMAKE_SOURCE_DIR}/src/comp.c
         ${CMAKE_SOURCE_DIR}/src/gpio.c
         ${CMAKE_SOURCE_DIR}/src/main.c

@@ -1,6 +1,6 @@
 #pragma once
 
-typedef enum
+typedef enum : uint8_t
 {
     COMPONENT_NONE,
     COMPONENT_BJT,

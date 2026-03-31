@@ -9,6 +9,9 @@
 
 int test_bjt_npn(int argc, char *argv[])
 {
+    calibration.rp = 15.0f;
+    calibration.rd = 15.0f;
+
     spice_init();
 
     bool res;
@@ -40,12 +43,12 @@ int test_bjt_npn(int argc, char *argv[])
         spice_dut_set(dut);
         res = bjt();
         assert(res);
-        assert(result_subtype == 1);
-        assert(fabsf(result_hfe - 152.6f) < 0.1f);
-        assert(fabsf(result_ube - 0.68f) < 0.01f);
-        assert(result_probes[0] == probes[i][0]);
-        assert(result_probes[1] == probes[i][1]);
-        assert(result_probes[2] == probes[i][2]);
+        assert(result.subtype == 1);
+        assert(fabsf(result.hfe - 152.6f) < 0.1f);
+        assert(fabsf(result.ube - 0.68f) < 0.01f);
+        assert(result.probes[0] == probes[i][0]);
+        assert(result.probes[1] == probes[i][1]);
+        assert(result.probes[2] == probes[i][2]);
         free(dut[1]);
     }
 

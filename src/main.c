@@ -4,6 +4,7 @@
 #include "n32g031_rcc.h"
 #include "n32g031_tim.h"
 #include "adc.h"
+#include "calib.h"
 #include "globals.h"
 #include "tool.h"
 #include "uart.h"
@@ -69,7 +70,16 @@ static void iwdg_setup(void)
     /* TODO: write disable? */
 }
 
-volatile uint32_t mainloop_seconds;
+/* wait for command received via UART, meanwhile decode infrared */
+static void cmd_wait_ir(void)
+{
+    if (!uart_rx_pending)
+    {
+        goto no_cmd_received;
+    }
+    uart_frame_tx.counter = uart_frame_rx.counter;
+no_cmd_received:
+}
 
 int main(void)
 {
@@ -78,14 +88,23 @@ int main(void)
     uart_init();
     adc_init();
     tim3_init();
-    /* TODO: calibration data handling */
+
+    /* load calibration data, initialize if not valid */
+    if (calib_load())
+    {
+        calib_default();
+        calib_write();
+    }
+
     iwdg_setup();
     SysTick_Config(SystemCoreClock / 100);
+
     while (true)
     {
         do
         {
             IWDG_ReloadKey();
+            cmd_wait_ir();
         } while (mainloop_seconds == 0);
         mainloop_seconds = 0;
         tool_do();
