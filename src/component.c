@@ -1,4 +1,5 @@
 #include "bjt.h"
+#include "emos.h"
 #include "globals.h"
 #include "uart.h"
 
@@ -7,7 +8,6 @@ static bool jfet(void) { return false; }
 static bool dmos(void) { return false; }
 static bool thy_triac(void) { return false; }
 static bool darlington(void) { return false; }
-static bool emos(void) { return false; }
 static bool igbt(void) { return false; }
 static bool ujt(void) { return false; }
 static bool diode(void) { return false; }
