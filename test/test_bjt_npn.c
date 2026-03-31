@@ -4,13 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "bjt.h"
+#include "globals.h"
 #include "spice.h"
-
-extern float result_hfe;
-extern float result_ic;
-extern float result_ube;
-extern unsigned int result_probes[3];
-extern unsigned int result_subtype;
 
 int test_bjt_npn(int argc, char *argv[])
 {

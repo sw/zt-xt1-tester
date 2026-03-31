@@ -1,4 +1,4 @@
-#include "tool.h"
+#include "globals.h"
 
 tool_t tool;
 float calib_rp = 15;

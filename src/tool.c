@@ -1,6 +1,5 @@
+#include "globals.h"
 #include "tool.h"
-
-extern tool_t tool;
 
 void tool_do(void)
 {

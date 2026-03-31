@@ -1,16 +1,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "adc.h"
+#include "globals.h"
 #include "probes.h"
 #include "timer.h"
-
-extern float calib_rp;
-extern float calib_rd;
-extern float result_hfe;
-extern float result_ic;
-extern float result_ube;
-extern unsigned int result_subtype;
-extern unsigned int result_probes[3];
 
 static bool bjt_npn(unsigned int p0, unsigned int p1, unsigned int p2)
 {

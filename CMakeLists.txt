@@ -8,6 +8,7 @@ enable_language(CXX)
 # Add project sources
 list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/bjt.c
+    ${CMAKE_SOURCE_DIR}/src/globals.c
     ${CMAKE_SOURCE_DIR}/src/tool.c
 )
 
@@ -33,6 +34,7 @@ else()
     # Target-specific sources not included in test build
     list(APPEND SOURCES
         ${CMAKE_SOURCE_DIR}/src/adc.c
+        ${CMAKE_SOURCE_DIR}/src/comp.c
         ${CMAKE_SOURCE_DIR}/src/gpio.c
         ${CMAKE_SOURCE_DIR}/src/main.c
         ${CMAKE_SOURCE_DIR}/src/n32g031_it.c
