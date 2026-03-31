@@ -1,3 +1,4 @@
+#include <string.h>
 #include "n32g031_usart.h"
 #include "globals.h"
 #include "uart.h"
@@ -78,4 +79,10 @@ void uart_send(uint_fast8_t id, size_t length)
         USART_SendData(USART1, uart_frame_tx.raw[i]);
     }
     while (USART_GetFlagStatus(USART1, USART_FLAG_TXDE) == RESET) { }
+}
+
+void uart_send_result(void)
+{
+    memcpy(uart_frame_tx.payload, &result, sizeof(result));
+    uart_send(2, sizeof(result));
 }

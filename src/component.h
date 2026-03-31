@@ -1,7 +1,11 @@
 #pragma once
 
+#include <stdint.h>
+
 typedef enum : uint8_t
 {
-    COMPONENT_NONE,
-    COMPONENT_BJT,
+    COMPONENT_NONE = 0,
+    COMPONENT_BJT  = 4,
 } component_t;
+
+void component_do_all(void);

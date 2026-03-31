@@ -1,9 +1,9 @@
 #pragma once
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include "component.h"
+#include "debug.h"
 #include "tool.h"
 
 typedef struct
@@ -70,14 +70,19 @@ typedef struct
 static_assert(sizeof(result_t) == 88);
 
 extern calibration_t calibration;
+extern uint_least8_t calib_timeout;
+extern uint_least8_t calib_request;
+
 extern uart_frame_rx_t uart_frame_rx;
 extern uart_frame_tx_t uart_frame_tx;
-volatile extern uint32_t uart_rx_len;
-volatile extern bool uart_rx_pending;
+extern volatile uint32_t uart_rx_len;
+extern volatile bool uart_rx_pending;
 
 extern tool_t tool;
+extern uint8_t test_type;
 
 extern result_t result;
 
+extern uint_fast8_t adc_sampletime;
 extern volatile uint32_t mainloop_seconds;
 extern volatile uint32_t mainloop_centiseconds;

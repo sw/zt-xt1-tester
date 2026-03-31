@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "bjt.h"
+#include "component.h"
 #include "globals.h"
 #include "spice.h"
 
@@ -24,8 +24,8 @@ int test_bjt_pnp(int argc, char *argv[])
 
     /* sanity check: no device connected */
     spice_dut_set(dut);
-    res = bjt();
-    assert(!res);
+    component_do_all();
+    assert(result.component == COMPONENT_NONE);
 
     static const unsigned int probes[6][3] =
     {
@@ -41,9 +41,8 @@ int test_bjt_pnp(int argc, char *argv[])
     {
         asprintf(&dut[1], "q1 /tp%u /tp%u /tp%u 2N3906 temp=27", probes[i][1] + 1, probes[i][0] + 1, probes[i][2] + 1);
         spice_dut_set(dut);
-        res = bjt();
-        fflush(stdout);
-        assert(res);
+        component_do_all();
+        assert(result.component == COMPONENT_BJT);
         assert(result.subtype == 2);
         assert(fabsf(result.hfe - 205.0f) < 0.1f);
         assert(fabsf(result.ube - 0.72f) < 0.01f);

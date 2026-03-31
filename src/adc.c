@@ -1,5 +1,6 @@
 #include "n32g031_adc.h"
 #include "n32g031_opamp.h"
+#include "globals.h"
 #include "gpio.h"
 
 void adc_init(void)
@@ -39,4 +40,30 @@ void adc_init(void)
     OPAMP_SetVpSel(OPAMP_CS_VPSEL_PF0);
 
     gpio_init(GPIOF, GPIO_PIN_0, GPIO_MODE_ANALOG, GPIO_NO_PULL);
+}
+
+uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
+{
+    uint_fast16_t i;
+    uint_fast32_t sum = 0;
+    assert(num < UINT_FAST32_MAX / 0xFFF);
+  
+    ADC_ConfigRegularChannel(ADC, channel, 1, adc_sampletime);
+
+    /* erratum 5.2? throw away first conversion result */
+    ADC_EnableSoftwareStartConv(ADC, ENABLE);
+    while (ADC_GetFlagStatus(ADC, ADC_FLAG_ENDC) == RESET) {}
+    ADC_ClearFlag(ADC, ADC_FLAG_ENDC);
+    ADC_ClearFlag(ADC, ADC_FLAG_STR);
+
+    for (i = 0; i < num; i++)
+    {
+        ADC_EnableSoftwareStartConv(ADC, ENABLE);
+        while (ADC_GetFlagStatus(ADC, ADC_FLAG_ENDC) == RESET) {}
+        ADC_ClearFlag(ADC, ADC_FLAG_ENDC);
+        ADC_ClearFlag(ADC, ADC_FLAG_STR);
+
+        sum += ADC_GetDat(ADC);
+    }
+    return sum / num;
 }

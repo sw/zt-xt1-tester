@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 typedef enum : uint8_t
 {
     TOOL_NONE           = 0,

@@ -6,21 +6,21 @@
 #include <ngspice/sharedspice.h>
 #include "adc.h"
 #include "assert.h"
-#include "probes.h"
+#include "probe.h"
 #include "spice.h"
 #include "timer.h"
 
-int send_char(char *s, int id, void *user)
+static int send_char(char *s, int id, void *user)
 {
     printf("%s:%s\n", __FUNCTION__, s);
 }
 
-int send_stat(char *stat, int id, void *user)
+static int send_stat(char *stat, int id, void *user)
 {
     // printf("%s:%s\n", __FUNCTION__, stat);
 }
 
-int controlled_exit(int status, NG_BOOL immediate, NG_BOOL quit, int id, void *user)
+static int controlled_exit(int status, NG_BOOL immediate, NG_BOOL quit, int id, void *user)
 {
     if (!quit)
     {
@@ -29,9 +29,9 @@ int controlled_exit(int status, NG_BOOL immediate, NG_BOOL quit, int id, void *u
     }
 }
 
-float adc_val[8];
+static float adc_val[8];
 
-int send_data(pvecvaluesall vec_vals, int num, int id, void *user)
+static int send_data(pvecvaluesall vec_vals, int num, int id, void *user)
 {
     // printf("%s num=%d veccount=%d vecindex=%d\n", __FUNCTION__, num, vec_vals->veccount, vec_vals->vecindex);
     for (int i = 0; i < vec_vals->veccount; i++)
@@ -55,12 +55,12 @@ int send_data(pvecvaluesall vec_vals, int num, int id, void *user)
     }
 }
 
-int send_init_data(pvecinfoall vec_info, int id, void *user)
+static int send_init_data(pvecinfoall vec_info, int id, void *user)
 {
     // printf("%s\n", __FUNCTION__);
 }
 
-int bg_thread_running(NG_BOOL running, int id, void *user)
+static int bg_thread_running(NG_BOOL running, int id, void *user)
 {
     printf("%s:%u\n", __FUNCTION__, running);
 }
@@ -75,15 +75,15 @@ void spice_uninit(void)
     ngSpice_Command("quit");
 }
 
-struct
+static struct
 {
     probe_mode_t direct;
     probe_mode_t r680;
     probe_mode_t r470k;
 } probes[3];
 
-unsigned int sleep_ms;
-bool circ_ready;
+static uint_fast32_t sleep_ms;
+static bool circ_ready;
 
 static spice_probe_settings_t probe_settings =
 {
@@ -108,7 +108,7 @@ void spice_dut_set(char **s)
     circ_ready = false;
 }
 
-void probe_configure(unsigned int probe, probe_mode_t direct, probe_mode_t r680, probe_mode_t r470k)
+void probe_configure(uint_fast8_t probe, probe_mode_t direct, probe_mode_t r680, probe_mode_t r470k)
 {
     assert(probe < 3);
     assert(direct < PROBE_MODE_NB);
@@ -120,12 +120,12 @@ void probe_configure(unsigned int probe, probe_mode_t direct, probe_mode_t r680,
     circ_ready = false;
 }
 
-void msleep(unsigned int ms)
+void tim6_msleep(uint_fast32_t ms)
 {
     sleep_ms = ms;
 }
 
-unsigned int adc_average(unsigned int channel, unsigned int num)
+uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
 {
     if (!circ_ready)
     {
@@ -230,3 +230,5 @@ unsigned int adc_average(unsigned int channel, unsigned int num)
     }
     return val;
 }
+
+void uart_send_result(void) { }

@@ -8,6 +8,7 @@ enable_language(CXX)
 # Add project sources
 list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/bjt.c
+    ${CMAKE_SOURCE_DIR}/src/component.c
     ${CMAKE_SOURCE_DIR}/src/globals.c
     ${CMAKE_SOURCE_DIR}/src/tool.c
 )
@@ -39,6 +40,8 @@ else()
         ${CMAKE_SOURCE_DIR}/src/gpio.c
         ${CMAKE_SOURCE_DIR}/src/main.c
         ${CMAKE_SOURCE_DIR}/src/n32g031_it.c
+        ${CMAKE_SOURCE_DIR}/src/probe.c
+        ${CMAKE_SOURCE_DIR}/src/timer.c
         ${CMAKE_SOURCE_DIR}/src/uart.c
     )
     add_executable(${PROJECT_NAME} ${SOURCES})
