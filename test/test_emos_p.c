@@ -3,12 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "calib.h"
 #include "component.h"
 #include "globals.h"
 #include "spice.h"
 
 int test_emos_p(int argc, char *argv[])
 {
+    calib_default();
     spice_init();
 
     bool res;
@@ -41,6 +43,7 @@ int test_emos_p(int argc, char *argv[])
         component_do_all();
         assert(result.component == COMPONENT_EMOS);
         assert(result.subtype == 2);
+        assert(fabsf(result.resistance - 2.23f) < 0.01f);
         assert(result.probes[0] == probes[i][0]);
         assert(result.probes[1] == probes[i][1]);
         assert(result.probes[2] == probes[i][2]);

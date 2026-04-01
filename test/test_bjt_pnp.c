@@ -3,15 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "calib.h"
 #include "component.h"
 #include "globals.h"
 #include "spice.h"
 
 int test_bjt_pnp(int argc, char *argv[])
 {
-    calibration.rp = 15.0f;
-    calibration.rd = 15.0f;
-
+    calib_default();
     spice_init();
 
     bool res;

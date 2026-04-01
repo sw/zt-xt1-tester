@@ -106,13 +106,16 @@ bool emos(void)
             tim6_msleep(100);
             int a2 = adc_average(channels[result.probes[2]], 1000);
             int a1 = adc_average(channels[result.probes[1]], 1000);
+            /* should be (a1 - a2) / a2 * Rd ??? */
             result.resistance = abs(a1 - a2) * 30.0f / a2;
+            debug_log("r = (%d - %d) * 30 / %d = %f\n", a1, a2, a2, result.resistance);
             if (result.resistance < 1.0f)
             {
                 if (result.resistance > 0.01f)
                 {
-                    // ???
+                    return true;
                 }
+                /* WTF? add random digit 0...9 / 1000 */
             }
             else
             {
@@ -122,7 +125,26 @@ bool emos(void)
         }
         if (emos_p(probes[i][0], probes[i][1], probes[i][2]))
         {
-            // TODO
+            probe_configure(result.probes[0], PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+            probe_configure(result.probes[2], PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+            probe_configure(result.probes[1], PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+            tim6_msleep(100);
+            int a1 = adc_average(channels[result.probes[1]], 1000);
+            int a2 = adc_average(channels[result.probes[2]], 1000);
+            result.resistance = abs(a2 - a1) * 680.0f / a1;
+            debug_log("r = (%d - %d) * 680 / %d = %f\n", a2, a1, a1, result.resistance);
+            if (result.resistance < 1.0f)
+            {
+                if (result.resistance > 0.01f)
+                {
+                    return true;
+                }
+                /* WTF? add random digit 0...9 / 1000 */
+            }
+            else
+            {
+                result.resistance /= 4.0f;
+            }
             return true;
         }
     }

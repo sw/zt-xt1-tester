@@ -3,12 +3,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "calib.h"
 #include "component.h"
 #include "globals.h"
 #include "spice.h"
 
 int test_emos_n(int argc, char *argv[])
 {
+    calib_default();
     spice_init();
 
     bool res;
