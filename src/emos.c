@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "adc.h"
 #include "debug.h"
+#include "diode.h"
 #include "emos.h"
 #include "globals.h"
 #include "probe.h"
@@ -8,79 +9,81 @@
 
 static const unsigned int channels[3] = {1, 3, 7};
 
-static bool emos_n(unsigned int p0, unsigned int p1, unsigned int p2)
+static bool emos_n(unsigned int pg, unsigned int pd, unsigned int ps)
 {
-    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    //FUN_0800577c(p2, p1);
-    result.bd = 2.0f /* TODO */ < 1.0f;
+    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    /* measure forward voltage of body diode */
+    diode_forward_reverse(ps, pd);
+    result.bd = result.diode_vf < 1.0f;
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    probe_configure(p2, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    float u0 = adc_average(channels[p0], 100) * 5.0f / 4095.0f;
-    float u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-    if ((u0 < 4.5f) || (u1 > 0.3f))
+    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(pd, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(ps, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    float ug = adc_average(channels[pg], 100) * 5.0f / 4095.0f;
+    float ud = adc_average(channels[pd], 100) * 5.0f / 4095.0f;
+    if ((ug < 4.5f) || (ud > 0.3f))
     {
         return false;
     }
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    u0 = adc_average(channels[p0], 100) * 5.0f / 4095.0f;
-    u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-    if ((u0 > 0.3f) || (u1 < 4.5f))
+    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    ug = adc_average(channels[pg], 100) * 5.0f / 4095.0f;
+    ud = adc_average(channels[pd], 100) * 5.0f / 4095.0f;
+    if ((ug > 0.3f) || (ud < 4.5f))
     {
         return false;
     }
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    probe_configure(p1, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(p2, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    float u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f; /* TODO: store */
-    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    //measure_small_cap(p2, p0, p1, 1);
+    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(ps, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    float us = adc_average(channels[ps], 100) * 5.0f / 4095.0f; /* TODO: store */
+    probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    //measure_small_cap(ps, pg, pd, 1);
     result.component = COMPONENT_EMOS;
-    result.probes[0] = p0;
-    result.probes[1] = p1;
-    result.probes[2] = p2;
+    result.probes[0] = pg;
+    result.probes[1] = pd;
+    result.probes[2] = ps;
     result.subtype = 1;
     return true;
 }
 
-static bool emos_p(unsigned int p0, unsigned int p1, unsigned int p2)
+static bool emos_p(unsigned int pg, unsigned int pd, unsigned int ps)
 {
-    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    //FUN_0800577c(probe1,probe2);
-    result.bd = 2.0f /* TODO */ < 1.0f;
+    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    /* measure forward voltage of body diode */
+    diode_forward_reverse(pd, ps);
+    result.bd = result.diode_vf < 1.0f;
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    probe_configure(p2, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    float u0 = 5.0f - adc_average(channels[p0], 100) * 5.0f / 4095.0f;
-    float u1 = 5.0f - adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-    if ((u0 < 4.5f) || (u1 > 0.6f))
+    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    probe_configure(pd, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    probe_configure(ps, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+    float ug = 5.0f - adc_average(channels[pg], 100) * 5.0f / 4095.0f;
+    float ud = 5.0f - adc_average(channels[pd], 100) * 5.0f / 4095.0f;
+    if ((ug < 4.5f) || (ud > 0.6f))
     {
         return false;
     }
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     tim6_msleep(10);
-    u0 = 5.0f - adc_average(channels[p0], 100) * 5.0f / 4095.0f;
-    u1 = 5.0f - adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-    if ((u0 > 0.6f) || (u1 < 4.5f))
+    ug = 5.0f - adc_average(channels[pg], 100) * 5.0f / 4095.0f;
+    ud = 5.0f - adc_average(channels[pd], 100) * 5.0f / 4095.0f;
+    if ((ug > 0.6f) || (ud < 4.5f))
     {
         return false;
     }
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(p2, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    float u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f; /* TODO: store */
-    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    //measure_small_cap(p2, p0, p1, 1);
+    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(ps, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    float us = adc_average(channels[ps], 100) * 5.0f / 4095.0f; /* TODO: store */
+    probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    //measure_small_cap(ps, pg, pd, 1);
     result.component = COMPONENT_EMOS;
-    result.probes[0] = p0;
-    result.probes[1] = p1;
-    result.probes[2] = p2;
+    result.probes[0] = pg;
+    result.probes[1] = pd;
+    result.probes[2] = ps;
     result.subtype = 2;
     return true;
 }

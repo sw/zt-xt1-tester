@@ -10,6 +10,7 @@ list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/bjt.c
     ${CMAKE_SOURCE_DIR}/src/calib.c
     ${CMAKE_SOURCE_DIR}/src/component.c
+    ${CMAKE_SOURCE_DIR}/src/diode.c
     ${CMAKE_SOURCE_DIR}/src/emos.c
     ${CMAKE_SOURCE_DIR}/src/globals.c
     ${CMAKE_SOURCE_DIR}/src/tool.c

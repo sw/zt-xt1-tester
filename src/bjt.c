@@ -6,118 +6,118 @@
 #include "probe.h"
 #include "timer.h"
 
-static bool bjt_npn(unsigned int p0, unsigned int p1, unsigned int p2)
+static bool bjt_npn(unsigned int pb, unsigned int pc, unsigned int pe)
 {
     static const unsigned int channels[3] = {1, 3, 7};
 
-    debug_log("%s(%u, %u, %u)\n", __FUNCTION__, p0, p1, p2);
+    debug_log("%s(%u, %u, %u)\n", __FUNCTION__, pb, pc, pe);
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    probe_configure(p2, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    probe_configure(pc, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(pe, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     tim6_msleep(1);
-    float u0 = adc_average(channels[p0], 100) * 5.0f / 4095.0f;
-    float u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-    float u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f;
-    debug_log("U0=%.2fV U1=%.2fV U2=%.2fV\n", u0, u1, u2);
-    float ib = (5.0f - u0) / (470000.0f + calibration.rp);
-    debug_log("Ib = (5V - %.2fV) / (470kohm + %.0fohm) = %.2fuA\n", u0, calibration.rp, ib * 1e6f);
-    float ic = (5.0f - u1) / (680.0f + calibration.rp);
-    debug_log("Ic = (5V - %.2fV) / (680ohm + %.0fohm) = %.2fmA\n", u1, calibration.rp, ic * 1e3f);
+    float ub = adc_average(channels[pb], 100) * 5.0f / 4095.0f;
+    float uc = adc_average(channels[pc], 100) * 5.0f / 4095.0f;
+    float ue = adc_average(channels[pe], 100) * 5.0f / 4095.0f;
+    debug_log("U0=%.2fV U1=%.2fV U2=%.2fV\n", ub, uc, ue);
+    float ib = (5.0f - ub) / (470000.0f + calibration.rp);
+    debug_log("Ib = (5V - %.2fV) / (470kohm + %.0fohm) = %.2fuA\n", ub, calibration.rp, ib * 1e6f);
+    float ic = (5.0f - uc) / (680.0f + calibration.rp);
+    debug_log("Ic = (5V - %.2fV) / (680ohm + %.0fohm) = %.2fmA\n", uc, calibration.rp, ic * 1e3f);
     result.hfe = ic / ib;
     debug_log("hFE = %.1f\n", result.hfe);
-    result.ube = u0 - u2;
-    debug_log("Ube = %.3fV - %.3fV = %.3fV\n", u0, u2, result.ube);
-    if ((result.ube > 0.9f) || (result.hfe > 600.0f) || (u1 > 4.95f))
+    result.ube = ub - ue;
+    debug_log("Ube = %.3fV - %.3fV = %.3fV\n", ub, ue, result.ube);
+    if ((result.ube > 0.9f) || (result.hfe > 600.0f) || (uc > 4.95f))
     {
         return false;
     }
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    probe_configure(p2, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+    probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    probe_configure(pe, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     tim6_msleep(1);
-    u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-    result.ic_mA = (5.0f - u1) / (470000.0f + calibration.rd) * 1e3f;
-    debug_log("Ic = (5V - %fV) / (470kohm + %.0fohm) = %.1fuA\n", u1, calibration.rd, result.ic_mA * 1e3f);
-    if ((result.ic_mA > 0.5f) || (u1 < 4.5f))
+    uc = adc_average(channels[pc], 100) * 5.0f / 4095.0f;
+    result.ic_mA = (5.0f - uc) / (470000.0f + calibration.rd) * 1e3f;
+    debug_log("Ic = (5V - %fV) / (470kohm + %.0fohm) = %.1fuA\n", uc, calibration.rd, result.ic_mA * 1e3f);
+    if ((result.ic_mA > 0.5f) || (uc < 4.5f))
     {
         return false;
     }
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(p2, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    u0 = adc_average(channels[p0], 100) * 5.0f / 4095.0f;
-    debug_log("U0 = %.2fV\n", u0);
-    if (u0 > 2.5f)
+    probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+    probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(pe, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+    ub = adc_average(channels[pb], 100) * 5.0f / 4095.0f;
+    debug_log("U0 = %.2fV\n", ub);
+    if (ub > 2.5f)
     {
         return false;
     }
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-    probe_configure(p2, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-    u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f;
-    debug_log("U? = %.2fV - %.2fV = %.2fV\n", u2, u1, u2 - u1);
+    probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+    probe_configure(pe, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+    uc = adc_average(channels[pc], 100) * 5.0f / 4095.0f;
+    ue = adc_average(channels[pe], 100) * 5.0f / 4095.0f;
+    debug_log("U? = %.2fV - %.2fV = %.2fV\n", ue, uc, ue - uc);
     result.subtype = 1;
     return true;
 }
 
-static bool bjt_pnp(unsigned int p0, unsigned int p1, unsigned int p2)
+static bool bjt_pnp(unsigned int pb, unsigned int pc, unsigned int pe)
 {
     static const unsigned int channels[3] = {1, 3, 7};
 
-    debug_log("%s(%u, %u, %u)\n", __FUNCTION__, p0, p1, p2);
+    debug_log("%s(%u, %u, %u)\n", __FUNCTION__, pb, pc, pe);
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-    probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    probe_configure(p2, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    float u0 = adc_average(channels[p0], 100) * 5.0f / 4095.0f;
-    float u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-    float u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f;
-    debug_log("U0=%.2fV U1=%.2fV U2=%.2fV\n", u0, u1, u2);
-    float ib = u0 / (470000.0f + calibration.rd);
-    debug_log("Ib = %.2fV / (470kohm + %.0fohm) = %.2fuA\n", u0, calibration.rd, ib * 1e6f);
-    float ic = u1 / (680.0f + calibration.rd);
-    debug_log("Ic = %.2fV / (680ohm + %.0fohm) = %.2fmA\n", u1, calibration.rd, ic * 1e3f);
+    probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+    probe_configure(pc, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    probe_configure(pe, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+    float ub = adc_average(channels[pb], 100) * 5.0f / 4095.0f;
+    float uc = adc_average(channels[pc], 100) * 5.0f / 4095.0f;
+    float ue = adc_average(channels[pe], 100) * 5.0f / 4095.0f;
+    debug_log("U0=%.2fV U1=%.2fV U2=%.2fV\n", ub, uc, ue);
+    float ib = ub / (470000.0f + calibration.rd);
+    debug_log("Ib = %.2fV / (470kohm + %.0fohm) = %.2fuA\n", ub, calibration.rd, ib * 1e6f);
+    float ic = uc / (680.0f + calibration.rd);
+    debug_log("Ic = %.2fV / (680ohm + %.0fohm) = %.2fmA\n", uc, calibration.rd, ic * 1e3f);
     result.hfe = ic / ib;
     debug_log("hFE = %.1f\n", result.hfe);
-    result.ube = u2 - u0;
-    debug_log("Ube = %.3fV - %.3fV = %.3fV\n", u2, u0, result.ube);
-    if ((result.ube > 0.9f) || (result.hfe > 600.0f) || (u0 > 4.95))
+    result.ube = ue - ub;
+    debug_log("Ube = %.3fV - %.3fV = %.3fV\n", ue, ub, result.ube);
+    if ((result.ube > 0.9f) || (result.hfe > 600.0f) || (ub > 4.95))
     {
         return false;
     }
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-    probe_configure(p2, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-    result.ic_mA = u1 / (470000.0f + calibration.rd) * 1e3f;
-    debug_log("Ic = %fV / (470kohm + %.0fohm) = %.1fuA\n", u1, calibration.rd, result.ic_mA * 1e3f);
-    if ((result.ic_mA > 0.5f) || (u1 > 0.5f))
+    probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+    probe_configure(pe, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+    uc = adc_average(channels[pc], 100) * 5.0f / 4095.0f;
+    result.ic_mA = uc / (470000.0f + calibration.rd) * 1e3f;
+    debug_log("Ic = %fV / (470kohm + %.0fohm) = %.1fuA\n", uc, calibration.rd, result.ic_mA * 1e3f);
+    if ((result.ic_mA > 0.5f) || (uc > 0.5f))
     {
         return false;
     }
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    probe_configure(p2, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    u0 = adc_average(channels[p0], 100) * 5.0f / 4095.0f;
-    debug_log("U0 = %.2fV\n", u0);
-    if (u0 < 2.5f)
+    probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    probe_configure(pe, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    ub = adc_average(channels[pb], 100) * 5.0f / 4095.0f;
+    debug_log("U0 = %.2fV\n", ub);
+    if (ub < 2.5f)
     {
         return false;
     }
 
-    probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    probe_configure(p2, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-    u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f;
-    debug_log("U? = %.2fV - %.2fV = %.2fV\n", u1, u2, u1 - u2);
+    probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+    probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    probe_configure(pe, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    uc = adc_average(channels[pc], 100) * 5.0f / 4095.0f;
+    ue = adc_average(channels[pe], 100) * 5.0f / 4095.0f;
+    debug_log("U? = %.2fV - %.2fV = %.2fV\n", uc, ue, uc - ue);
     result.subtype = 2;
     return true;
 }

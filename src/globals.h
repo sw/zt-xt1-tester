@@ -55,10 +55,16 @@ typedef struct
     float resistance;
     float capacitance;
     float inductance;
-    float vdiff;
+    union {
+        float vdiff;
+        float diode_vf;
+    };
     float hfe;
     float ube;
-    float ic_mA;
+    union {
+        float ic_mA;
+        float diode_ir_mA;
+    };
     float cap_vloss;
     float temperature;
     float humidity;
