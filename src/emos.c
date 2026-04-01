@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "adc.h"
+#include "debug.h"
 #include "emos.h"
 #include "globals.h"
 #include "probe.h"
@@ -18,31 +19,31 @@ static bool emos_n(unsigned int p0, unsigned int p1, unsigned int p2)
     probe_configure(p2, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     float u0 = adc_average(channels[p0], 100) * 5.0f / 4095.0f;
     float u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-
-    if ((u0 > 4.5f) && (u1 < 0.3f))
+    if ((u0 < 4.5f) || (u1 > 0.3f))
     {
-        probe_configure(p0, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-        u0 = adc_average(channels[p0], 100) * 5.0f / 4095.0f;
-        u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-
-        if ((u0 < 0.3f) && (u1 > 4.5f))
-        {
-            probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-            probe_configure(p1, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-            probe_configure(p2, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-            float u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f; /* TODO: store */
-            probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-            //measure_small_cap(p2, p0, p1, 1);
-            result.component = COMPONENT_EMOS;
-            result.probes[0] = p0;
-            result.probes[1] = p1;
-            result.probes[2] = p2;
-            result.subtype = 1;
-            return true;
-        }
+        return false;
     }
 
-    return false;
+    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    u0 = adc_average(channels[p0], 100) * 5.0f / 4095.0f;
+    u1 = adc_average(channels[p1], 100) * 5.0f / 4095.0f;
+    if ((u0 > 0.3f) || (u1 < 4.5f))
+    {
+        return false;
+    }
+
+    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(p1, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(p2, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    float u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f; /* TODO: store */
+    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    //measure_small_cap(p2, p0, p1, 1);
+    result.component = COMPONENT_EMOS;
+    result.probes[0] = p0;
+    result.probes[1] = p1;
+    result.probes[2] = p2;
+    result.subtype = 1;
+    return true;
 }
 
 static bool emos_p(unsigned int p0, unsigned int p1, unsigned int p2)
@@ -56,31 +57,32 @@ static bool emos_p(unsigned int p0, unsigned int p1, unsigned int p2)
     probe_configure(p2, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
     float u0 = 5.0f - adc_average(channels[p0], 100) * 5.0f / 4095.0f;
     float u1 = 5.0f - adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-
-    if ((u0 > 4.5f) && (u1 < 0.6f))
+    if ((u0 < 4.5f) || (u1 > 0.6f))
     {
-        probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-        tim6_msleep(10);
-        u0 = 5.0f - adc_average(channels[p0], 100) * 5.0f / 4095.0f;
-        u1 = 5.0f - adc_average(channels[p1], 100) * 5.0f / 4095.0f;
-
-        if ((u0 < 0.6f) && (u1 > 4.5f))
-        {
-            probe_configure(p0, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-            probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-            probe_configure(p2, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-            float u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f; /* TODO: store */
-            probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-            //measure_small_cap(p2, p0, p1, 1);
-            result.component = COMPONENT_EMOS;
-            result.probes[0] = p0;
-            result.probes[1] = p1;
-            result.probes[2] = p2;
-            result.subtype = 2;
-            return true;
-        }
+        return false;
     }
-    return false;
+
+    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    tim6_msleep(10);
+    u0 = 5.0f - adc_average(channels[p0], 100) * 5.0f / 4095.0f;
+    u1 = 5.0f - adc_average(channels[p1], 100) * 5.0f / 4095.0f;
+    if ((u0 > 0.6f) || (u1 < 4.5f))
+    {
+        return false;
+    }
+
+    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(p2, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    float u2 = adc_average(channels[p2], 100) * 5.0f / 4095.0f; /* TODO: store */
+    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    //measure_small_cap(p2, p0, p1, 1);
+    result.component = COMPONENT_EMOS;
+    result.probes[0] = p0;
+    result.probes[1] = p1;
+    result.probes[2] = p2;
+    result.subtype = 2;
+    return true;
 }
 
 bool emos(void)

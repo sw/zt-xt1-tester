@@ -6,5 +6,6 @@
     #define debug_log(...)
 #else
     #include <assert.h>
+    #include <stdio.h>
     #define debug_log(...) printf(__VA_ARGS__)
 #endif
