@@ -73,12 +73,11 @@ bool diode(void)
         {2, 1, 0},
     };
     float ir[6];
-    int i = 0;
-    int j = 0;
-    float maximum = 0;
+    int num = 0;
+    float max_vf = 0;
     int max_idx = 0;
 
-    while (true)
+    for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
     {
         probe_configure(0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
         probe_configure(1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
@@ -98,67 +97,62 @@ bool diode(void)
 
         if (result.diode_vf < 0.18f)
         {
-            break;
+            return false;
         }
         if (result.diode_vf < 3.5f)
         {
-            j++;
-            if (maximum < result.diode_vf)
+            num++;
+            if (max_vf < result.diode_vf)
             {
-                maximum = result.diode_vf;
+                max_vf = result.diode_vf;
                 max_idx = i;
             }
         }
-        i++;
-        if (5 < i)
+    }
+
+    if (num == 3)
+    {
+        /* delete a 2x diode */
+        result.diode_vf_a[max_idx] = 5.0f;
+    }
+    else if (num == 1)
+    {
+        result.component = COMPONENT_DIODE;
+        result.diode_vf = result.diode_vf_a[max_idx];
+        result.diode_ir_mA = ir[max_idx];
+        cap_small(probes[max_idx][0], probes[max_idx][1], probes[max_idx][2], true);
+        if (999.0f < result.capacitance_pF)
         {
-            if (j == 3)
+            result.capacitance_pF = 0.0f;
+        }
+        result.probes[0] = probes[max_idx][0];
+        result.probes[1] = probes[max_idx][1];
+        return true;
+    }
+    else if (num != 2)
+    {
+        return false;
+    }
+
+    for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
+    {
+        if (   (i != max_idx)
+            && (result.diode_vf_a[i] < 4.5f)
+            && (result.diode_vf_a[max_idx] - result.diode_vf_a[i] < 0.1f))
+        {
+            diode_unknown(probes[i][0], probes[i][1], 1);
+            float r1 = result.resistance;
+            diode_unknown(probes[i][0], probes[i][1], 2);
+            float r2 = result.resistance;
+            if (fabsf(r1 - r2) < r1 * 0.1f)
             {
-                /* delete a 2x diode */
-                result.diode_vf_a[max_idx] = 5.0f;
-            }
-            else if (j != 2)
-            {
-                if (j == 1)
-                {
-                    result.component = COMPONENT_DIODE;
-                    result.diode_vf = result.diode_vf_a[max_idx];
-                    result.diode_ir_mA = ir[max_idx];
-                    cap_small(probes[max_idx][0], probes[max_idx][1], probes[max_idx][2], true);
-                    if (999.0f < result.capacitance_pF)
-                    {
-                        result.capacitance_pF = 0.0f;
-                    }
-                    result.probes[0] = probes[max_idx][0];
-                    result.probes[1] = probes[max_idx][1];
-                    return true;
-                }
                 return false;
             }
-            i = 0;
-            do
-            {
-                if (   (i != max_idx)
-                    && (result.diode_vf_a[i] < 4.5f)
-                    && (result.diode_vf_a[max_idx] - result.diode_vf_a[i] < 0.1f))
-                {
-                    diode_unknown(probes[i][0], probes[i][1], 1);
-                    float r1 = result.resistance;
-                    diode_unknown(probes[i][0], probes[i][1], 2);
-                    float r2 = result.resistance;
-                    if (fabsf(r1 - r2) < r1 * 0.1f)
-                    {
-                        return false;
-                    }
-                }
-                i++;
-            }
-            while (i < 6);
-            result.component = COMPONENT_2DIODE;
-            return true;
         }
+        i++;
     }
-    return false;
+    result.component = COMPONENT_2DIODE;
+    return true;
 }
 
 void diode_forward_reverse(unsigned int pa, unsigned int pk)
