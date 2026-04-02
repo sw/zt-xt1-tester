@@ -13,7 +13,6 @@ int test_emos_n(int argc, char *argv[])
     calib_default();
     spice_init();
 
-    bool res;
     char *dut[3];
     int i = 0;
     dut[i++] = ".include \"../../../test/spice/2N7002.txt\"";

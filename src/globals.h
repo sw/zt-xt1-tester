@@ -72,9 +72,14 @@ typedef struct
     float cap_vloss;
     float temperature;
     float humidity;
-    float misc[2];
-    float infrared_f;
-    uint8_t infrared_unknown[16];
+    union {
+        float diode_vf_a[6];
+        struct {
+            float misc[2];
+            float infrared_f;
+        };
+    };
+    uint8_t infrared_unknown[4];
     uint32_t temp_hum[2];
 } result_t;
 static_assert(sizeof(result_t) == 88);

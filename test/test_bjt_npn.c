@@ -13,7 +13,6 @@ int test_bjt_npn(int argc, char *argv[])
     calib_default();
     spice_init();
 
-    bool res;
     char *dut[3];
     int i = 0;
     dut[i++] = ".include \"../../../test/spice/2N3904.txt\"";

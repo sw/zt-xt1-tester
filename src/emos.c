@@ -12,6 +12,8 @@ static const unsigned int channels[3] = {1, 3, 7};
 
 static bool emos_n(unsigned int pg, unsigned int pd, unsigned int ps)
 {
+    debug_log("%s(%u, %u, %u)\n", __FUNCTION__, pg, pd, ps);
+
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     /* measure forward voltage of body diode */
     diode_forward_reverse(ps, pd);
@@ -51,6 +53,8 @@ static bool emos_n(unsigned int pg, unsigned int pd, unsigned int ps)
 
 static bool emos_p(unsigned int pg, unsigned int pd, unsigned int ps)
 {
+    debug_log("%s(%u, %u, %u)\n", __FUNCTION__, pg, pd, ps);
+
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     /* measure forward voltage of body diode */
     diode_forward_reverse(pd, ps);
