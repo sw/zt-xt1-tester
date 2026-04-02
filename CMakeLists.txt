@@ -9,6 +9,7 @@ enable_language(CXX)
 list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/bjt.c
     ${CMAKE_SOURCE_DIR}/src/calib.c
+    ${CMAKE_SOURCE_DIR}/src/cap.c
     ${CMAKE_SOURCE_DIR}/src/component.c
     ${CMAKE_SOURCE_DIR}/src/diode.c
     ${CMAKE_SOURCE_DIR}/src/emos.c

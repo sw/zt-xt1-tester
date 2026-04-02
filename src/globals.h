@@ -53,7 +53,7 @@ typedef struct
     uint8_t bd;
     uint8_t unknown[6];
     float resistance;
-    float capacitance;
+    float capacitance_pF;
     float inductance;
     union {
         float vdiff;
@@ -92,3 +92,6 @@ extern result_t result;
 extern uint_fast8_t adc_sampletime;
 extern volatile uint32_t mainloop_seconds;
 extern volatile uint32_t mainloop_centiseconds;
+
+extern volatile uint32_t tim3_cnt_comp;
+extern volatile uint32_t tim3_expiry;

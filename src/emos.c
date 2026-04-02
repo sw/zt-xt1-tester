@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "adc.h"
+#include "cap.h"
 #include "debug.h"
 #include "diode.h"
 #include "emos.h"
@@ -39,7 +40,7 @@ static bool emos_n(unsigned int pg, unsigned int pd, unsigned int ps)
     probe_configure(ps, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     float us = adc_average(channels[ps], 100) * 5.0f / 4095.0f; /* TODO: store */
     probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    //measure_small_cap(ps, pg, pd, 1);
+    cap_small(ps, pg, pd, true);
     result.component = COMPONENT_EMOS;
     result.probes[0] = pg;
     result.probes[1] = pd;
@@ -79,7 +80,7 @@ static bool emos_p(unsigned int pg, unsigned int pd, unsigned int ps)
     probe_configure(ps, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     float us = adc_average(channels[ps], 100) * 5.0f / 4095.0f; /* TODO: store */
     probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    //measure_small_cap(ps, pg, pd, 1);
+    cap_small(ps, pg, pd, true);
     result.component = COMPONENT_EMOS;
     result.probes[0] = pg;
     result.probes[1] = pd;

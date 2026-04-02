@@ -17,3 +17,6 @@ result_t result;
 uint_fast8_t adc_sampletime;
 volatile uint32_t mainloop_seconds;
 volatile uint32_t mainloop_centiseconds;
+
+volatile uint32_t tim3_cnt_comp;
+volatile uint32_t tim3_expiry;
