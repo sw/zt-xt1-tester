@@ -20,16 +20,16 @@ static bool emos_n(unsigned int pg, unsigned int pd, unsigned int ps)
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(pd, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(ps, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    float ug = adc_average(channels[pg], 100) * 5.0f / 4095.0f;
-    float ud = adc_average(channels[pd], 100) * 5.0f / 4095.0f;
+    float ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
+    float ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
     if ((ug < 4.5f) || (ud > 0.3f))
     {
         return false;
     }
 
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    ug = adc_average(channels[pg], 100) * 5.0f / 4095.0f;
-    ud = adc_average(channels[pd], 100) * 5.0f / 4095.0f;
+    ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
+    ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
     if ((ug > 0.3f) || (ud < 4.5f))
     {
         return false;
@@ -38,7 +38,7 @@ static bool emos_n(unsigned int pg, unsigned int pd, unsigned int ps)
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(ps, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    float us = adc_average(channels[ps], 100) * 5.0f / 4095.0f; /* TODO: store */
+    result.emos_uth = 5.0f - adc_average(channels[ps], 100) * (5.0f / 4095.0f);
     probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     cap_small(ps, pg, pd, true);
     result.component = COMPONENT_EMOS;
@@ -59,8 +59,8 @@ static bool emos_p(unsigned int pg, unsigned int pd, unsigned int ps)
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     probe_configure(pd, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     probe_configure(ps, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    float ug = 5.0f - adc_average(channels[pg], 100) * 5.0f / 4095.0f;
-    float ud = 5.0f - adc_average(channels[pd], 100) * 5.0f / 4095.0f;
+    float ug = 5.0f - adc_average(channels[pg], 100) * (5.0f / 4095.0f);
+    float ud = 5.0f - adc_average(channels[pd], 100) * (5.0f / 4095.0f);
     if ((ug < 4.5f) || (ud > 0.6f))
     {
         return false;
@@ -68,8 +68,8 @@ static bool emos_p(unsigned int pg, unsigned int pd, unsigned int ps)
 
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     tim6_msleep(10);
-    ug = 5.0f - adc_average(channels[pg], 100) * 5.0f / 4095.0f;
-    ud = 5.0f - adc_average(channels[pd], 100) * 5.0f / 4095.0f;
+    ug = 5.0f - adc_average(channels[pg], 100) * (5.0f / 4095.0f);
+    ud = 5.0f - adc_average(channels[pd], 100) * (5.0f / 4095.0f);
     if ((ug > 0.6f) || (ud < 4.5f))
     {
         return false;
@@ -78,7 +78,7 @@ static bool emos_p(unsigned int pg, unsigned int pd, unsigned int ps)
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(ps, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    float us = adc_average(channels[ps], 100) * 5.0f / 4095.0f; /* TODO: store */
+    result.emos_uth = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
     probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     cap_small(ps, pg, pd, true);
     result.component = COMPONENT_EMOS;

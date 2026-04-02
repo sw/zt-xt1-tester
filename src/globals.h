@@ -60,7 +60,11 @@ typedef struct
         float diode_vf;
     };
     float hfe;
-    float ube;
+    union
+    {
+        float bjt_ube;
+        float emos_uth;
+    };
     union {
         float ic_mA;
         float diode_ir_mA;

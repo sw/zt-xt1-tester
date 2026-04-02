@@ -44,6 +44,7 @@ int test_emos_p(int argc, char *argv[])
         assert(result.component == COMPONENT_EMOS);
         assert(result.subtype == 2);
         assert(fabsf(result.resistance - 2.23f) < 0.01f);
+        assert(fabsf(result.emos_uth - 2.07f) < 0.01f);
         assert(result.probes[0] == probes[i][0]);
         assert(result.probes[1] == probes[i][1]);
         assert(result.probes[2] == probes[i][2]);
