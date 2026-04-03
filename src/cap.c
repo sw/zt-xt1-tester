@@ -15,10 +15,8 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool su
 #if __ARM_EABI__
     static GPIO_Module *const r470k_gpios[3] = { GPIOA, GPIOA, GPIOB };
     static const uint16_t r470k_pins[3] = { GPIO_PIN_2, GPIO_PIN_5, GPIO_PIN_1 };
-#else
-    /* TODO: simulation */
-    return false;
 #endif
+    debug_log("%s(%u, %u)\n", __FUNCTION__, p0, p1);
 
     float probe_cap;
     if (p1 == 0)
@@ -60,6 +58,8 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool su
     probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
 #if __ARM_EABI__
     r470k_gpios[p1]->PBSC = r470k_pins[p1];
+#else
+    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
 #endif
     static const uint_fast32_t timeout = 48000000 / 10;
     uint32_t cnt = comp_wait(timeout);
@@ -78,6 +78,7 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool su
     {
         result.capacitance_pF -= probe_cap;
     }
+    debug_log("cnt=%u C=%fpF\n", cnt, result.capacitance_pF);
     return true;
 }
 
@@ -87,6 +88,7 @@ void cap_medium(unsigned int p0, unsigned int p1, unsigned int p2)
     static GPIO_Module *const r680_gpios[3] = { GPIOA, GPIOA, GPIOA };
     static const uint16_t r680_pins[3] = { GPIO_PIN_0, GPIO_PIN_4, GPIO_PIN_6 };
 #endif
+    debug_log("%s(%u, %u)\n", __FUNCTION__, p0, p1);
     probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
@@ -101,11 +103,13 @@ void cap_medium(unsigned int p0, unsigned int p1, unsigned int p2)
     uint32_t cnt = comp_wait(480000000 / 2);
     /* use counter value even if timeout reached */
     result.capacitance_pF = cnt * (1e12f / 48e6f / 691.0f / logf(63.0f / (63.0f - vref)));
+    debug_log("cnt=%u C=%fpF\n", cnt, result.capacitance_pF);
 }
 
 void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
 {
     static const unsigned int channels[3] = {1, 3, 7};
+    debug_log("%s(%u, %u)\n", __FUNCTION__, p0, p1);
     probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
@@ -161,4 +165,5 @@ void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
     u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     result.capacitance_pF = cnt * (1e12f / 48e6f / 680.0f / logf(5.0f / (5.0f - u)));
+    debug_log("cnt=%u U=%f C=%fpF\n", cnt, u, result.capacitance_pF);
 }

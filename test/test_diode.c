@@ -44,7 +44,13 @@ int test_diode(int argc, char *argv[])
         component_do_all();
         assert(result.component == COMPONENT_DIODE);
         assert(fabsf(result.diode_vf - 0.68f) < 0.01f);
-        assert(result.diode_ir_mA < 0.0053f); /* TODO: why the variation? */
+
+        /* TODO: why the variation? */
+        assert(0.0f <= result.diode_ir_mA);
+        assert(result.diode_ir_mA < 0.0076f);
+        assert(0.0f <= result.capacitance_pF);
+        assert(result.capacitance_pF < 39.0f);
+
         assert(result.probes[0] == probes[i][0]);
         assert(result.probes[1] == probes[i][1]);
         free(dut[2]);

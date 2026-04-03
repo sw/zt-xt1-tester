@@ -4,6 +4,12 @@ typedef struct
 {
     float rd;
     float rp;
+    float probe12_cap;
+    float probe13_cap;
+    float probe21_cap;
+    float probe23_cap;
+    float probe31_cap;
+    float probe32_cap;
 } spice_probe_settings_t;
 
 void spice_init(void);
