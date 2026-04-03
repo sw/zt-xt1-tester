@@ -1,4 +1,5 @@
 #include "bjt.h"
+#include "cap.h"
 #include "diode.h"
 #include "emos.h"
 #include "globals.h"
@@ -11,7 +12,6 @@ static bool thy_triac(void) { return false; }
 static bool darlington(void) { return false; }
 static bool igbt(void) { return false; }
 static bool ujt(void) { return false; }
-static void cap_bat(void) { }
 static void resistor(void) { }
 static bool inductor(void) { return false; }
 

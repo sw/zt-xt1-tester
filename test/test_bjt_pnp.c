@@ -23,7 +23,7 @@ int test_bjt_pnp(int argc, char *argv[])
     /* sanity check: no device connected */
     spice_dut_set(dut);
     component_do_all();
-    assert(result.component == COMPONENT_NONE);
+    assert((result.component == COMPONENT_NONE) || ((result.component == COMPONENT_CAP) && (result.capacitance_pF < 10.0f)));
 
     static const unsigned int probes[6][3] =
     {

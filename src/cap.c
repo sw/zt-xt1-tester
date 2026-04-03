@@ -10,6 +10,74 @@
 #include "probe.h"
 #include "timer.h"
 
+static void cap_bat_find(void)
+{
+    static const unsigned int channels[3] = {1, 3, 7};
+    static const unsigned int probes[6][3] =
+    {
+        {0, 1, 2},
+        {0, 2, 1},
+        {1, 0, 2},
+        {1, 2, 0},
+        {2, 0, 1},
+        {2, 1, 0},
+    };
+    result.component = COMPONENT_NONE;
+    int i;
+    for (i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
+    {
+        probe_configure(probes[i][0], PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+        probe_configure(probes[i][1], PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+        probe_configure(probes[i][2], PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+        tim6_msleep(10);
+        float u = adc_average(channels[probes[i][1]], 100) * (5.0f / 4095.0f);
+        if (u < 1.0f)
+        {
+            probe_configure(probes[i][1], PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+            tim6_msleep(10);
+            u = adc_average(channels[probes[i][1]], 100) * (5.0f / 4095.0f);
+            if (u < 2.0f)
+            {
+                tim6_msleep(1000);
+                float u2 = adc_average(channels[probes[i][1]], 100) * (5.0f / 4095.0f);
+                if (!(u + 0.05f > u2))
+                {
+                    goto cap;
+                }
+            }
+        }
+        else
+        {
+            probe_configure(probes[i][1], PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+            tim6_msleep(10);
+            u = adc_average(channels[probes[i][1]], 100) * (5.0f / 4095.0f);
+            if (0.5f < u)
+            {
+                tim6_msleep(1000);
+                float u2 = adc_average(channels[probes[i][1]], 100) * (5.0f / 4095.0f);
+                if (u2 + 0.05f > u)
+                {
+                    debug_log("%s found battery\n", __FUNCTION__);
+                    result.component = COMPONENT_BATTERY;
+                }
+                else
+                {
+    cap:
+                    debug_log("%s found capacitor\n", __FUNCTION__);
+                    result.component = COMPONENT_CAP;
+                }
+                break;
+            }
+        }
+    }
+    result.probes[0] = probes[i][0];
+    result.probes[2] = probes[i][1]; // !!!
+    result.probes[1] = probes[i][2]; // !!!
+    probe_configure(0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+}
+
 bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool subtract_probe)
 {
 #if __ARM_EABI__
@@ -49,6 +117,9 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool su
     {
         probe_cap = calibration.probe23_cap;
     }
+
+    /* p2 is not initialised in the original firmware, how does this even work??? */
+    probe_configure(p2_unused, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
 
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_DRV_LO);
@@ -99,6 +170,8 @@ void cap_medium(unsigned int p0, unsigned int p1, unsigned int p2)
     comp_init(p1, vref);
 #if __ARM_EABI__
     r680_gpios[p1]->PBSC = r680_pins[p1];
+#else
+    probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
 #endif
     uint32_t cnt = comp_wait(480000000 / 2);
     /* use counter value even if timeout reached */
@@ -166,4 +239,72 @@ void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     result.capacitance_pF = cnt * (1e12f / 48e6f / 680.0f / logf(5.0f / (5.0f - u)));
     debug_log("cnt=%u U=%f C=%fpF\n", cnt, u, result.capacitance_pF);
+}
+
+bool cap_bat(void)
+{
+    static const unsigned int probes[3][3] =
+    {
+        {0, 1, 2},
+        {0, 2, 1},
+        {1, 2, 0},
+    };
+    cap_bat_find();
+    debug_log("cap_bat_find %u\n", result.component);
+    if (result.component == COMPONENT_BATTERY)
+    {
+        // measure_bat_voltage();
+        debug_log("Battery\n");
+    }
+    else
+    {
+        if (result.component == COMPONENT_CAP)
+        {
+            cap_big(result.probes[0], result.probes[2], result.probes[1]);
+            if (55e6f < result.capacitance_pF) /* >55uF? */
+            {
+                // cap_esr(result.probes[0], result.probes[2], true);
+                // cap_vloss(result.probes[0], result.probes[2]);
+                return true;
+            }
+        }
+        for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
+        {
+            cap_medium(probes[i][0], probes[i][1], probes[i][2]);
+            if (1e8f < result.capacitance_pF) /* >100uF? shouldn't happen */
+            {
+                result.capacitance_pF = 0.0f;
+                return false;
+            }
+            if (90e3f < result.capacitance_pF) /* >90nF? */
+            {
+                result.component = COMPONENT_CAP;
+                result.probes[0] = probes[i][0];
+                result.probes[2] = probes[i][1];
+                // cap_esr(result.probes[0], result.probes[2], true);
+                // cap_vloss(result.probes[0], result.probes[2]);
+                return true;
+            }
+        }
+        float c_max = 0.0f;
+        int max_idx;
+        for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
+        {
+            cap_small(probes[i][0], probes[i][1], probes[i][2], true);
+            if (!(c_max > result.capacitance_pF))
+            {
+                c_max = result.capacitance_pF;
+                max_idx = i;
+            }
+        }
+        if (c_max <= 0.0f)
+        {
+            return false;
+        }
+        result.capacitance_pF = c_max;
+        result.component = COMPONENT_CAP;
+        result.probes[0] = probes[max_idx][0];
+        result.probes[2] = probes[max_idx][1];
+    }
+    return true;
 }

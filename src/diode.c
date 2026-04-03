@@ -127,6 +127,7 @@ bool diode(void)
         }
         result.probes[0] = probes[max_idx][0];
         result.probes[1] = probes[max_idx][1];
+        debug_log("diode Uf=%f Ir=%fmA C=%fpF probes:%u %u\n", result.diode_vf, result.diode_ir_mA, result.capacitance_pF, result.probes[0], result.probes[1]);
         return true;
     }
     else if (num != 2)
@@ -151,6 +152,7 @@ bool diode(void)
         }
         i++;
     }
+    debug_log("2 diode\n");
     result.component = COMPONENT_2DIODE;
     return true;
 }
