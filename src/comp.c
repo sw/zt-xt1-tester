@@ -2,6 +2,7 @@
 #include "n32g031_exti.h"
 #include "comp.h"
 #include "debug.h"
+#include "globals.h"
 
 void comp_init(uint_fast8_t probe, uint_fast8_t vref_sel)
 {
@@ -29,4 +30,17 @@ void comp_init(uint_fast8_t probe, uint_fast8_t vref_sel)
     NVIC_InitStruct.NVIC_IRQChannelPriority = 0;
     NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStruct);
+}
+
+uint_fast32_t comp_wait(uint_fast32_t timeout)
+{
+    TIM_SetCnt(TIM3, 0);
+    tim3_cnt_comp = 0;
+    tim3_expiry = 0;
+    uint_fast32_t cnt;
+    for (cnt = 0; (tim3_cnt_comp == 0) && (cnt < timeout); cnt = tim3_expiry << 16)
+    {
+        IWDG_ReloadKey();
+    }
+    return cnt + tim3_cnt_comp;
 }

@@ -231,4 +231,11 @@ uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
     return val;
 }
 
-void uart_send_result(void) { }
+void comp_init(uint_fast8_t probe, uint_fast8_t vref_sel)
+{
+}
+
+uint_fast32_t comp_wait(uint_fast32_t timeout)
+{
+    return 0;
+}

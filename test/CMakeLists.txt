@@ -8,9 +8,9 @@ set(TESTS
 
 create_test_sourcelist(SOURCES_TEST test_driver.c ${TESTS})
 
-add_executable(${PROJECT_NAME} ${SOURCES} ${SOURCES_TEST} spice.c)
+add_executable(${PROJECT_NAME} ${SOURCES} ${SOURCES_TEST} misc.c spice.c)
 
-target_link_libraries(${PROJECT_NAME} ngspice)
+target_link_libraries(${PROJECT_NAME} m ngspice)
 
 foreach(test ${TESTS})
     get_filename_component(name ${test} NAME_WE)
