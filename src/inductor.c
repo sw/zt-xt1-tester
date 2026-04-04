@@ -13,6 +13,9 @@ float inductor_comp(unsigned int p0, unsigned int p1)
 #if __ARM_EABI__
     static GPIO_Module *const direct_gpios[3] = { GPIOA, GPIOA, GPIOA };
     static const uint16_t direct_pins[3] = { GPIO_PIN_1, GPIO_PIN_3, GPIO_PIN_7 };
+#else
+    static const unsigned int direct_gpios[3] = { 0 };
+    static const unsigned int direct_pins[3] = { 0, 0, 0 };
 #endif
 
     result.resistance = fabsf(result.resistance);
@@ -24,11 +27,8 @@ float inductor_comp(unsigned int p0, unsigned int p1)
     tim6_msleep(10);
 
     /* drive p1 high */
-#if __ARM_EABI__
-    direct_gpios[p1]->PBSC = direct_pins[p1];
-#endif
     static const uint_fast32_t timeout = 48000000 / 5;
-    uint32_t cnt = comp_wait(timeout);
+    uint32_t cnt = comp_start(direct_gpios[p1], direct_pins[p1], timeout);
     if (cnt >= timeout)
     {
         cnt = 0;

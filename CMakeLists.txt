@@ -15,6 +15,7 @@ list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/emos.c
     ${CMAKE_SOURCE_DIR}/src/globals.c
     ${CMAKE_SOURCE_DIR}/src/inductor.c
+    ${CMAKE_SOURCE_DIR}/src/resistor.c
     ${CMAKE_SOURCE_DIR}/src/tool.c
 )
 

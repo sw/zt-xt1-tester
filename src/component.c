@@ -3,6 +3,7 @@
 #include "diode.h"
 #include "emos.h"
 #include "globals.h"
+#include "resistor.h"
 #include "uart.h"
 
 static bool zener(void) { return false; }
@@ -12,7 +13,6 @@ static bool thy_triac(void) { return false; }
 static bool darlington(void) { return false; }
 static bool igbt(void) { return false; }
 static bool ujt(void) { return false; }
-static void resistor(void) { }
 static bool inductor(void) { return false; }
 
 void component_do_all(void)

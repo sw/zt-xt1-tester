@@ -8,7 +8,7 @@
 #include "globals.h"
 #include "spice.h"
 
-int test_cap(int argc, char *argv[])
+int test_resistor(int argc, char *argv[])
 {
     calib_default();
     spice_init();
@@ -22,21 +22,21 @@ int test_cap(int argc, char *argv[])
     /* sanity check: no device connected */
     spice_dut_set(dut);
     component_do_all();
+    fflush(stdout);
     assert((result.component == COMPONENT_NONE) || ((result.component == COMPONENT_CAP) && (result.capacitance_pF < 10.0f)));
 
     static const unsigned int probes[3][2] = { {0, 1}, {0, 2}, {1, 2} };
 
-    /* TODO: >10mF */
-    for (float c = 100; c < 10e9f; c *= 100.0f)
+    /* TODO: 10Mohm...30Mohm */
+    for (float r = 10.0f; r < 10e6f; r *= 100.0f)
     {
         for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
         {
-            asprintf(&dut[0], "c1 /tp%u /tp%u %fp", probes[i][0] + 1, probes[i][1] + 1, c);
+            asprintf(&dut[0], "r1 /tp%u /tp%u %f", probes[i][0] + 1, probes[i][1] + 1, r);
             spice_dut_set(dut);
             component_do_all();
-            assert(result.component == COMPONENT_CAP);
-            /* TODO: investigate inaccuracy */
-            assert(fabsf(result.capacitance_pF - c) < c * 0.1f + 10.0f);
+            assert(result.component == COMPONENT_RESISTOR);
+            assert(fabsf(result.resistance - r) < r * 0.1f);
             assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
                    || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
             free(dut[0]);

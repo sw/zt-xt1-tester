@@ -4,72 +4,18 @@
 #include "diode.h"
 #include "globals.h"
 #include "probe.h"
+#include "resistor.h"
 #include "timer.h"
-
-static void diode_unknown(int a, int b, int param)
-{
-    static const unsigned int channels[3] = {1, 3, 7};
-    float r;
-    adc_sampletime = 14;
-    if (param == 0)
-    {
-        /* very low resistance < 0.8ohm, connect directly */
-        probe_configure(a, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-        probe_configure(b, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-        tim6_msleep(1);
-        float aa = adc_average(channels[a], 1000);
-        float ab = adc_average(channels[b], 1000);
-        /* why add Rp??? */
-        result.resistance = (ab - aa) * (calibration.rd + calibration.rp) / aa;
-    }
-    else
-    {
-        if (param != 1)
-        {
-            if (param == 2)
-            {
-                /* medium resistance < 15kohm, use 2x680R */
-                probe_configure(a, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-                probe_configure(b, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-                tim6_msleep(100);
-                float aa = adc_average(channels[a], 1000);
-                float ab = adc_average(channels[b], 1000);
-                result.resistance = (ab - aa) * (calibration.rd + 680.0f) / aa;
-            }
-            else
-            {
-                if (param != 3) { goto out; }
-                probe_configure(a, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-                probe_configure(b, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-                tim6_msleep(100);
-                float aa = adc_average(channels[a], 1000);
-                float ab = adc_average(channels[b], 1000);
-                result.resistance = (ab - aa) * (calibration.rd + 470e3f) / aa;
-            }
-        }
-        else
-        {
-            probe_configure(a, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-            probe_configure(b, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-            tim6_msleep(100);
-            float ua = adc_average(channels[a], 1000) * (5.0f / 4095.0f);
-            float ub = adc_average(channels[b], 1000) * (5.0f / 4095.0f);
-            result.resistance = (ub - ua) * 680.0f / (5.0f - ub);
-        }
-    }
-out:
-    adc_sampletime = 5;
-}
 
 bool diode(void)
 {
     static const unsigned int probes[6][3] =
     {
         {0, 1, 2},
-        {0, 2, 1},
         {1, 0, 2},
-        {1, 2, 0},
+        {0, 2, 1},
         {2, 0, 1},
+        {1, 2, 0},
         {2, 1, 0},
     };
     float ir[6];
@@ -90,7 +36,7 @@ bool diode(void)
         diode_forward_reverse(probes[i][0], probes[i][1]);
         if (0.1f < fabsf(result.diode_vf_a[i] - result.diode_vf))
         {
-            return false;
+            return false; /* TODO: simulate this case */
         }
         result.diode_vf_a[i] = result.diode_vf;
         ir[i] = result.diode_ir_mA;
@@ -141,16 +87,15 @@ bool diode(void)
             && (result.diode_vf_a[i] < 4.5f)
             && (result.diode_vf_a[max_idx] - result.diode_vf_a[i] < 0.1f))
         {
-            diode_unknown(probes[i][0], probes[i][1], 1);
+            resistor_measure(probes[i][0], probes[i][1], 1);
             float r1 = result.resistance;
-            diode_unknown(probes[i][0], probes[i][1], 2);
+            resistor_measure(probes[i][0], probes[i][1], 2);
             float r2 = result.resistance;
             if (fabsf(r1 - r2) < r1 * 0.1f)
             {
                 return false;
             }
         }
-        i++;
     }
     debug_log("2 diode\n");
     result.component = COMPONENT_2DIODE;

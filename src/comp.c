@@ -32,11 +32,12 @@ void comp_init(uint_fast8_t probe, uint_fast8_t vref_sel)
     NVIC_Init(&NVIC_InitStruct);
 }
 
-uint_fast32_t comp_wait(uint_fast32_t timeout)
+uint_fast32_t comp_start(GPIO_Module *gpio, uint_fast16_t pin, uint_fast32_t timeout)
 {
-    TIM_SetCnt(TIM3, 0);
     tim3_cnt_comp = 0;
     tim3_expiry = 0;
+    TIM_SetCnt(TIM3, 0);
+    gpio->PBSC = pin;
     uint_fast32_t cnt;
     for (cnt = 0; (tim3_cnt_comp == 0) && (cnt < timeout); cnt = tim3_expiry << 16)
     {

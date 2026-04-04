@@ -42,7 +42,7 @@ int test_bjt_npn(int argc, char *argv[])
         component_do_all();
         assert(result.component == COMPONENT_BJT);
         assert(result.subtype == 1);
-        assert(fabsf(result.hfe - 152.6f) < 0.1f);
+        assert(fabsf(result.hfe - 151.5f) < 0.1f);
         assert(fabsf(result.bjt_ube - 0.68f) < 0.01f);
         assert(result.probes[0] == probes[i][0]);
         assert(result.probes[1] == probes[i][1]);

@@ -5,6 +5,7 @@ set(TESTS
     test_diode.c
     test_emos_n.c
     test_emos_p.c
+    test_resistor.c
 )
 
 create_test_sourcelist(SOURCES_TEST test_driver.c ${TESTS})

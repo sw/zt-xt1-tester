@@ -83,6 +83,9 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool su
 #if __ARM_EABI__
     static GPIO_Module *const r470k_gpios[3] = { GPIOA, GPIOA, GPIOB };
     static const uint16_t r470k_pins[3] = { GPIO_PIN_2, GPIO_PIN_5, GPIO_PIN_1 };
+#else
+    static const unsigned int r470k_gpios[3] = { 0 };
+    static const unsigned int r470k_pins[3] = { 2, 2, 2 };
 #endif
     debug_log("%s(%u, %u)\n", __FUNCTION__, p0, p1);
 
@@ -119,7 +122,7 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool su
     }
 
     /* p2 is not initialised in the original firmware, how does this even work??? */
-    probe_configure(p2_unused, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(p2_unused, PROBE_ANALOG, PROBE_ANALOG /*PROBE_DRV_HI*/, PROBE_ANALOG);
 
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_DRV_LO);
@@ -127,13 +130,8 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool su
     const uint_fast8_t vref = 51;
     comp_init(p1, vref);
     probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-#if __ARM_EABI__
-    r470k_gpios[p1]->PBSC = r470k_pins[p1];
-#else
-    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-#endif
     static const uint_fast32_t timeout = 48000000 / 10;
-    uint32_t cnt = comp_wait(timeout);
+    uint32_t cnt = comp_start(r470k_gpios[p1], r470k_pins[p1], timeout);
     if (cnt >= timeout)
     {
         return false;
@@ -153,12 +151,16 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool su
     return true;
 }
 
+#if __ARM_EABI__
+static GPIO_Module *const r680_gpios[3] = { GPIOA, GPIOA, GPIOA };
+static const uint16_t r680_pins[3] = { GPIO_PIN_0, GPIO_PIN_4, GPIO_PIN_6 };
+#else
+static const unsigned int r680_gpios[3] = { 0 };
+static const unsigned int r680_pins[3] = { 1, 1, 1 };
+#endif
+
 void cap_medium(unsigned int p0, unsigned int p1, unsigned int p2)
 {
-#if __ARM_EABI__
-    static GPIO_Module *const r680_gpios[3] = { GPIOA, GPIOA, GPIOA };
-    static const uint16_t r680_pins[3] = { GPIO_PIN_0, GPIO_PIN_4, GPIO_PIN_6 };
-#endif
     debug_log("%s(%u, %u)\n", __FUNCTION__, p0, p1);
     probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
@@ -168,12 +170,7 @@ void cap_medium(unsigned int p0, unsigned int p1, unsigned int p2)
     tim6_msleep(100);
     const uint_fast8_t vref = 32;
     comp_init(p1, vref);
-#if __ARM_EABI__
-    r680_gpios[p1]->PBSC = r680_pins[p1];
-#else
-    probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-#endif
-    uint32_t cnt = comp_wait(480000000 / 2);
+    uint32_t cnt = comp_start(r680_gpios[p1], r680_pins[p1], 48000000 / 2);
     /* use counter value even if timeout reached */
     result.capacitance_pF = cnt * (1e12f / 48e6f / 691.0f / logf(63.0f / (63.0f - vref)));
     debug_log("cnt=%u C=%fpF\n", cnt, result.capacitance_pF);
@@ -220,9 +217,10 @@ void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     tim6_msleep(1000);
     comp_init(p1, 10);
+    /* TODO: this doesn't quite fit the comp_start() semantics */
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     static const uint_fast32_t timeout = 48000000 / 10;
-    uint32_t cnt = comp_wait(timeout);
+    uint32_t cnt = comp_start(r680_gpios[p1], r680_pins[p1], timeout);
     if (cnt >= timeout)
     {
         result.capacitance_pF = 3e10f; /* 30mF */
