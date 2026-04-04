@@ -17,3 +17,6 @@ foreach(test ${TESTS})
     get_filename_component(name ${test} NAME_WE)
     add_test(NAME ${name} COMMAND ${PROJECT_NAME} ${name})
 endforeach()
+
+set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 23)
+set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD_REQUIRED ON)
