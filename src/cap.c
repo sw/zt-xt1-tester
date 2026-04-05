@@ -36,25 +36,35 @@ static void cap_bat_find(void)
             probe_configure(probes[i][1], PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
             tim6_msleep(10);
             u = adc_average(channels[probes[i][1]], 100) * (5.0f / 4095.0f);
+            /* 
+                Charging a 55uF capacitor for 10ms through 680ohms from 0V takes it to 1.17V.
+                Bigger capacitors will have a lower voltage.
+            */
             if (u < 2.0f)
             {
-                tim6_msleep(1000);
+                tim6_msleep(1000); /* TODO: simulation */
                 float u2 = adc_average(channels[probes[i][1]], 100) * (5.0f / 4095.0f);
-                if (!(u + 0.05f > u2))
+                /* in 1s, a 100mF capacitor will charge to 73mV */
+                if (u2 > u + 0.05f)
                 {
-                    goto cap;
+                    debug_log("%s found capacitor\n", __FUNCTION__);
+                    result.component = COMPONENT_CAP;
+                    break;
                 }
             }
         }
         else
         {
+            /* voltage was high, could be a charged capacitor or a battery -> discharge for 10ms through 680ohms */
             probe_configure(probes[i][1], PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
             tim6_msleep(10);
             u = adc_average(channels[probes[i][1]], 100) * (5.0f / 4095.0f);
-            if (0.5f < u)
+            if (u > 0.5f)
             {
                 tim6_msleep(1000);
                 float u2 = adc_average(channels[probes[i][1]], 100) * (5.0f / 4095.0f);
+                /* after 1 second, a 100mF capacitor starting from 5V will have lost 73mV */
+                /* for a battery, this is a charge loss of ~1uAh which won't drop the voltage as much */
                 if (u2 + 0.05f > u)
                 {
                     debug_log("%s found battery\n", __FUNCTION__);
@@ -62,7 +72,6 @@ static void cap_bat_find(void)
                 }
                 else
                 {
-    cap:
                     debug_log("%s found capacitor\n", __FUNCTION__);
                     result.component = COMPONENT_CAP;
                 }
