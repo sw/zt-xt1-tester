@@ -11,11 +11,12 @@ bool diode(void)
 {
     static const unsigned int probes[6][3] =
     {
+        /* different order than original firmware to simplify tests. TODO: fix tests instead */
         {0, 1, 2},
-        {1, 0, 2},
         {0, 2, 1},
-        {2, 0, 1},
+        {1, 0, 2},
         {1, 2, 0},
+        {2, 0, 1},
         {2, 1, 0},
     };
     float ir[6];

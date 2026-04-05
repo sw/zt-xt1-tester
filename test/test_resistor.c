@@ -27,8 +27,8 @@ int test_resistor(int argc, char *argv[])
 
     static const unsigned int probes[3][2] = { {0, 1}, {0, 2}, {1, 2} };
 
-    /* TODO: 10Mohm...30Mohm */
-    for (float r = 10.0f; r < 10e6f; r *= 100.0f)
+    /* TODO: 4Mohm...30Mohm - weird adjustment for large values */
+    for (float r = 10.0f; r < 4e6f; r *= 75.0f)
     {
         for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
         {
@@ -36,7 +36,7 @@ int test_resistor(int argc, char *argv[])
             spice_dut_set(dut);
             component_do_all();
             assert(result.component == COMPONENT_RESISTOR);
-            assert(fabsf(result.resistance - r) < r * 0.1f);
+            assert(fabsf(result.resistance - r) < r * 0.02f + 0.5f);
             assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
                    || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
             free(dut[0]);

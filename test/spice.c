@@ -189,11 +189,6 @@ static void spice_prepare(const char *analysis, ...)
     circ_a[i++] = strdup("c20 0 /ad2 13p");
     circ_a[i++] = strdup("c30 0 /ad3 13p");
 
-    /* large resistors to set initial conditions of probes */
-    circ_a[i++] = strdup("r13 /tp1 0 10Meg");
-    circ_a[i++] = strdup("r23 /tp2 0 10Meg");
-    circ_a[i++] = strdup("r33 /tp3 0 10Meg");
-
     /* GPIO MOSFETs */
     /*
         Other possibly relevant parameters:
@@ -219,109 +214,108 @@ static void spice_prepare(const char *analysis, ...)
         , probe_settings.rp);
 
     /* TODO: tame this mess */
-    asprintf(&circ_a[i++], "MQ11 /TP1 %s 0 NMOS",
-        probes[0].direct == PROBE_DRV_LO && (!comp_step || (comp_probe != 0) || (comp_pullup != 0)) ? "+5V" : "0");
-    asprintf(&circ_a[i++], "MQ13  /S1 %s 0 NMOS",
-        probes[0].r680   == PROBE_DRV_LO && (!comp_step || (comp_probe != 0) || (comp_pullup != 1)) ? "+5V" : "0");
-    asprintf(&circ_a[i++], "MQ15  /W1 %s 0 NMOS",
-        probes[0].r470k  == PROBE_DRV_LO && (!comp_step || (comp_probe != 0) || (comp_pullup != 2)) ? "+5V" : "0");
-    asprintf(&circ_a[i++], "MQ21 /TP2 %s 0 NMOS",
-        probes[1].direct == PROBE_DRV_LO && (!comp_step || (comp_probe != 1) || (comp_pullup != 0)) ? "+5V" : "0");
-    asprintf(&circ_a[i++], "MQ23  /S2 %s 0 NMOS",
-        probes[1].r680   == PROBE_DRV_LO && (!comp_step || (comp_probe != 1) || (comp_pullup != 1)) ? "+5V" : "0");
-    asprintf(&circ_a[i++], "MQ25  /W2 %s 0 NMOS",
-        probes[1].r470k  == PROBE_DRV_LO && (!comp_step || (comp_probe != 1) || (comp_pullup != 2)) ? "+5V" : "0");
-    asprintf(&circ_a[i++], "MQ31 /TP3 %s 0 NMOS",
-        probes[2].direct == PROBE_DRV_LO && (!comp_step || (comp_probe != 2) || (comp_pullup != 0)) ? "+5V" : "0");
-    asprintf(&circ_a[i++], "MQ33  /S3 %s 0 NMOS",
-        probes[2].r680   == PROBE_DRV_LO && (!comp_step || (comp_probe != 2) || (comp_pullup != 1)) ? "+5V" : "0");
-    asprintf(&circ_a[i++], "MQ35  /W3 %s 0 NMOS",
-        probes[2].r470k  == PROBE_DRV_LO && (!comp_step || (comp_probe != 2) || (comp_pullup != 2)) ? "+5V" : "0");
-
     /* use a pulsed voltage source to drive the PMOS gates so the initial condition will have a different value */
-    circ_a[i++] = strdup("v2 /pg 0 pulse( 5 0 0 0 0 1 1 )");
+    circ_a[i++] = strdup("v2 /pg 0 pulse(5 0)");
 
     if (comp_step && (comp_probe == 0) && (comp_pullup == 0))
     {
+        circ_a[i++] = strdup("MQ11 /TP1 /pg  0  NMOS");
         circ_a[i++] = strdup("MQ12 /TP1 /pg +5V PMOS");
     }
     else
     {
-        asprintf(&circ_a[i++], "MQ12 /TP1 %s +5V PMOS", probes[0].direct == PROBE_DRV_HI ? "0" : "+5V");
+        asprintf(&circ_a[i++], "MQ11 /TP1 %s  0  NMOS", probes[0].direct == PROBE_DRV_LO ? "+5V" : " 0 ");
+        asprintf(&circ_a[i++], "MQ12 /TP1 %s +5V PMOS", probes[0].direct == PROBE_DRV_HI ? " 0 " : "+5V");
     }
 
     if (comp_step && (comp_probe == 0) && (comp_pullup == 1))
     {
+        circ_a[i++] = strdup("MQ13 /S1 /pg  0  NMOS");
         circ_a[i++] = strdup("MQ14 /S1 /pg +5V PMOS");
     }
     else
     {
-        asprintf(&circ_a[i++], "MQ14  /S1 %s +5V PMOS", probes[0].r680 == PROBE_DRV_HI ? "0" : "+5V");
+        asprintf(&circ_a[i++], "MQ13 /S1 %s  0  NMOS", probes[0].r680 == PROBE_DRV_LO ? "+5V" : " 0 ");
+        asprintf(&circ_a[i++], "MQ14 /S1 %s +5V PMOS", probes[0].r680 == PROBE_DRV_HI ? " 0 " : "+5V");
     }
 
     if (comp_step && (comp_probe == 0) && (comp_pullup == 2))
     {
+        circ_a[i++] = strdup("MQ15 /W1 /pg  0  NMOS");
         circ_a[i++] = strdup("MQ16 /W1 /pg +5V PMOS");
     }
     else
     {
-        asprintf(&circ_a[i++], "MQ16 /W1 %s +5V PMOS", probes[0].r470k == PROBE_DRV_HI ? "0" : "+5V");
+        asprintf(&circ_a[i++], "MQ15 /W1 %s  0  NMOS", probes[0].r470k == PROBE_DRV_LO ? "+5V" : " 0 ");
+        asprintf(&circ_a[i++], "MQ16 /W1 %s +5V PMOS", probes[0].r470k == PROBE_DRV_HI ? " 0 " : "+5V");
     }
 
 
     if (comp_step && (comp_probe == 1) && (comp_pullup == 0))
     {
+        circ_a[i++] = strdup("MQ21 /TP2 /pg  0  NMOS");
         circ_a[i++] = strdup("MQ22 /TP2 /pg +5V PMOS");
     }
     else
     {
-        asprintf(&circ_a[i++], "MQ22 /TP2 %s +5V PMOS", probes[1].direct == PROBE_DRV_HI ? "0" : "+5V");
+        asprintf(&circ_a[i++], "MQ21 /TP2 %s  0  NMOS", probes[1].direct == PROBE_DRV_LO ? "+5V" : " 0 ");
+        asprintf(&circ_a[i++], "MQ22 /TP2 %s +5V PMOS", probes[1].direct == PROBE_DRV_HI ? " 0 " : "+5V");
     }
     
     if (comp_step && (comp_probe == 1) && (comp_pullup == 1))
     {
+        circ_a[i++] = strdup("MQ23 /S2 /pg  0  NMOS");
         circ_a[i++] = strdup("MQ24 /S2 /pg +5V PMOS");
     }
     else
     {
-        asprintf(&circ_a[i++], "MQ24 /S2 %s +5V PMOS", probes[1].r680 == PROBE_DRV_HI ? "0" : "+5V");
+        asprintf(&circ_a[i++], "MQ23 /S2 %s  0  NMOS", probes[1].r680 == PROBE_DRV_LO ? "+5V" : " 0 ");
+        asprintf(&circ_a[i++], "MQ24 /S2 %s +5V PMOS", probes[1].r680 == PROBE_DRV_HI ? " 0 " : "+5V");
     }
 
     if (comp_step && (comp_probe == 1) && (comp_pullup == 2))
     {
+        circ_a[i++] = strdup("MQ25 /W2 /pg  0  NMOS");
         circ_a[i++] = strdup("MQ26 /W2 /pg +5V PMOS");
     }
     else
     {
-        asprintf(&circ_a[i++], "MQ26 /W2 %s +5V PMOS", probes[1].r470k == PROBE_DRV_HI ? "0" : "+5V");
+        asprintf(&circ_a[i++], "MQ25 /W2 %s  0  NMOS", probes[1].r470k == PROBE_DRV_LO ? "+5V" : " 0 ");
+        asprintf(&circ_a[i++], "MQ26 /W2 %s +5V PMOS", probes[1].r470k == PROBE_DRV_HI ? " 0 " : "+5V");
     }
 
     
     if (comp_step && (comp_probe == 2) && (comp_pullup == 0))
     {
+        circ_a[i++] = strdup("MQ31 /TP3 /pg  0  NMOS");
         circ_a[i++] = strdup("MQ32 /TP3 /pg +5V PMOS");
     }
     else
     {
-        asprintf(&circ_a[i++], "MQ32 /TP3 %s +5V PMOS", probes[2].direct == PROBE_DRV_HI ? "0" : "+5V");
+        asprintf(&circ_a[i++], "MQ31 /TP3 %s  0  NMOS", probes[2].direct == PROBE_DRV_LO ? "+5V" : " 0 ");
+        asprintf(&circ_a[i++], "MQ32 /TP3 %s +5V PMOS", probes[2].direct == PROBE_DRV_HI ? " 0 " : "+5V");
     }
 
     if (comp_step && (comp_probe == 2) && (comp_pullup == 1))
     {
+        circ_a[i++] = strdup("MQ33 /S3 /pg  0  NMOS");
         circ_a[i++] = strdup("MQ34 /S3 /pg +5V PMOS");
     }
     else
     {
-        asprintf(&circ_a[i++], "MQ34 /S3 %s +5V PMOS", probes[2].r680 == PROBE_DRV_HI ? "0" : "+5V");
+        asprintf(&circ_a[i++], "MQ33 /S3 %s  0  NMOS", probes[2].r680 == PROBE_DRV_LO ? "+5V" : " 0 ");
+        asprintf(&circ_a[i++], "MQ34 /S3 %s +5V PMOS", probes[2].r680 == PROBE_DRV_HI ? " 0 " : "+5V");
     }
 
     if (comp_step && (comp_probe == 2) && (comp_pullup == 2))
     {
+        circ_a[i++] = strdup("MQ35 /W3 /pg  0  NMOS");
         circ_a[i++] = strdup("MQ36 /W3 /pg +5V PMOS");
     }
     else
     {
-        asprintf(&circ_a[i++], "MQ36 /W3 %s +5V PMOS", probes[2].r470k == PROBE_DRV_HI ? "0" : "+5V");
+        asprintf(&circ_a[i++], "MQ35 /W3 %s  0  NMOS", probes[2].r470k == PROBE_DRV_LO ? "+5V" : " 0 ");
+        asprintf(&circ_a[i++], "MQ36 /W3 %s +5V PMOS", probes[2].r470k == PROBE_DRV_HI ? " 0 " : "+5V");
     }
 
     /* DUT */
@@ -383,17 +377,29 @@ uint_fast32_t comp_start(unsigned int unused, unsigned int pullup, uint_fast32_t
 
     op_ready = false;
     comp_pullup = pullup;
-    comp_cnt = 0;
-    comp_step = 10;
 
-    /* TODO: investigate uic */
-    spice_prepare(".tran %fns %fms", comp_step / (48e6 / 1e9), timeout / (48e6 / 1e3));
     char *stop;
     asprintf(&stop, "stop when v(%s) > %f", comp_probe_s, comp_threshold);
-    ngSpice_Command(stop);
-    free(stop);
-    ngSpice_Command("run");
 
+    /* speed up by doing coarse simulation step first */
+    uint_fast32_t limit;
+    for (comp_step = 100, limit = timeout / 100;
+         comp_step;
+         comp_step /= 10, limit /= 10)
+    {
+        comp_cnt = 0;
+        /* TODO: investigate uic */
+        spice_prepare(".tran %fns %fms", comp_step / (48e6 / 1e9), timeout / (48e6 / 1e3));
+        ngSpice_Command(stop);
+        ngSpice_Command("run");
+
+        if (comp_cnt > limit)
+        {
+            break;
+        }
+    }
+
+    free(stop);
     comp_step = 0;
     return comp_cnt;
 }

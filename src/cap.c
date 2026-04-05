@@ -130,6 +130,7 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool su
     const uint_fast8_t vref = 51;
     comp_init(p1, vref);
     probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+    /* maximum value of 90nF would need ~3.4 megaticks */
     static const uint_fast32_t timeout = 48000000 / 10;
     uint32_t cnt = comp_start(r470k_gpios[p1], r470k_pins[p1], timeout);
     if (cnt >= timeout)
@@ -170,6 +171,7 @@ void cap_medium(unsigned int p0, unsigned int p1, unsigned int p2)
     tim6_msleep(100);
     const uint_fast8_t vref = 32;
     comp_init(p1, vref);
+    /* original firmware has 4.8M but only 1.3M are needed for maximum value of 55uF */
     uint32_t cnt = comp_start(r680_gpios[p1], r680_pins[p1], 48000000 / 2);
     /* use counter value even if timeout reached */
     result.capacitance_pF = cnt * (1e12f / 48e6f / 691.0f / logf(63.0f / (63.0f - vref)));
@@ -219,7 +221,7 @@ void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
     comp_init(p1, 10);
     /* TODO: this doesn't quite fit the comp_start() semantics */
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    static const uint_fast32_t timeout = 48000000 / 10;
+    static const uint_fast32_t timeout = 48000000 * 5;
     uint32_t cnt = comp_start(r680_gpios[p1], r680_pins[p1], timeout);
     if (cnt >= timeout)
     {

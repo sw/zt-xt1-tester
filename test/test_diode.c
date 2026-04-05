@@ -56,7 +56,6 @@ int test_diode(int argc, char *argv[])
         free(dut[2]);
     }
 
-#ifdef TEST_SLOW
     /*
         dual diodes
         result.probes aren't set, instead check the forward voltages in result.diode_vf_a
@@ -101,7 +100,6 @@ int test_diode(int argc, char *argv[])
 
         free(dut[2]);
     }
-#endif
 
     spice_uninit();
     return 0;

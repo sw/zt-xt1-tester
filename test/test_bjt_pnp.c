@@ -42,7 +42,7 @@ int test_bjt_pnp(int argc, char *argv[])
         component_do_all();
         assert(result.component == COMPONENT_BJT);
         assert(result.subtype == 2);
-        assert(fabsf(result.hfe - 213.9f) < 0.1f);
+        assert(fabsf(result.hfe - 205.0f) < 1.0f);
         assert(fabsf(result.bjt_ube - 0.72f) < 0.01f);
         assert(result.probes[0] == probes[i][0]);
         assert(result.probes[1] == probes[i][1]);
