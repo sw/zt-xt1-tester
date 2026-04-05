@@ -1,6 +1,6 @@
 {
     "clangd.arguments": [
-        "-std=c23"
+        "--compile-commands-dir=${command:cmake.buildDirectory}"
     ],
     "cmake.options.advanced": {
         "configurePreset": {

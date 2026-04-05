@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(n32g031_template)
+project(zt_xt1_tester)
 
 enable_language(C)
 enable_language(CXX)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Add project sources
 list(APPEND SOURCES
