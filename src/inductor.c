@@ -1,5 +1,5 @@
 #include <math.h>
-#if __ARM_EABI__
+#ifdef __ARM_EABI__
 #include "n32g031_gpio.h"
 #include "n32g031_tim.h"
 #endif
@@ -10,7 +10,7 @@
 
 float inductor_comp(unsigned int p0, unsigned int p1)
 {
-#if __ARM_EABI__
+#ifdef __ARM_EABI__
     static GPIO_Module *const direct_gpios[3] = { GPIOA, GPIOA, GPIOA };
     static const uint16_t direct_pins[3] = { GPIO_PIN_1, GPIO_PIN_3, GPIO_PIN_7 };
 #else
@@ -35,7 +35,7 @@ float inductor_comp(unsigned int p0, unsigned int p1)
     }
 
     /* drive p1 low */
-#if __ARM_EABI__
+#ifdef __ARM_EABI__
     direct_gpios[p1]->PBC = direct_pins[p1];
 #endif
 

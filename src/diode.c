@@ -107,16 +107,22 @@ void diode_forward_reverse(unsigned int pa, unsigned int pk)
 {
     static const unsigned int channels[3] = {1, 3, 7};
 
+    debug_log("%s(%u, %u)\n", __FUNCTION__, pa, pk);
+
     probe_configure(pa, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(pk, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    tim6_usleep(100); /* not in original firmware, required for simulation */
     float ua = adc_average(channels[pa], 1000) * (5.0f / 4095.0f);
     float uk = adc_average(channels[pk], 1000) * (5.0f / 4095.0f);
     result.diode_vf = ua - uk;
+    debug_log("Vf = %.3f - %.3f = %.3f\n", ua, uk, result.diode_vf);
 
     probe_configure(pa, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(pk, PROBE_ANALOG, PROBE_DRV_HI, PROBE_DRV_HI);
     tim6_msleep(1);
     probe_configure(pk, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    tim6_usleep(100); /* not in original firmware, required for simulation */
     uk = adc_average(channels[pk], 1000) * (5.0f / 4095.0f);
     result.diode_ir_mA = (5.0f - uk) / 470.0f;
+    debug_log("Ir = (5V - %.2fV) / 470kohm = %.2fuA\n", uk, result.diode_ir_mA * 1000.0f);
 }

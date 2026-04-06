@@ -1,6 +1,11 @@
+#include "adc.h"
 #include "debug.h"
-#include "gpio.h"
+#include "helpers.h"
+#include "timer.h"
 #include "probe.h"
+
+#ifdef __ARM_EABI__
+#include "gpio.h"
 
 void probe_configure(uint_fast8_t probe, probe_mode_t direct, probe_mode_t r680, probe_mode_t r470k)
 {
@@ -110,4 +115,33 @@ void probe_configure(uint_fast8_t probe, probe_mode_t direct, probe_mode_t r680,
             gpio_init(GPIOB, GPIO_PIN_1, GPIO_MODE_OUTPUT_PP, GPIO_NO_PULL);
         }
     }
+}
+#endif /* __ARM_EABI__ */
+
+void probe_discharge(uint_fast8_t p0, uint_fast8_t p1)
+{
+    static const unsigned int channels[3] = {1, 3, 7};
+
+    probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(p1, PROBE_DRV_LO, PROBE_DRV_LO, PROBE_ANALOG);
+    adc_average(channels[p1], 100); /* measurement thrown away */
+    float u;
+
+    do
+    {
+        iwdg_reload();
+        tim6_usleep(1); /* not in original firmware, required for simulation */
+        u = adc_average(channels[p1], 100) * (5.0f / 4095.0f);
+    }
+    while (0.01f < u);
+
+    probe_configure(p1,PROBE_ANALOG,PROBE_DRV_LO,PROBE_ANALOG);
+
+    do
+    {
+        iwdg_reload();
+        tim6_msleep(10);
+        u = adc_average(channels[p1], 100) * (5.0f / 4095.0f);
+    }
+    while (0.01f < u);
 }

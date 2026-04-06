@@ -21,7 +21,7 @@ int test_bjt_pnp(int argc, char *argv[])
     assert(i <= sizeof(dut) / sizeof(dut[0]));
 
     /* sanity check: no device connected */
-    spice_dut_set(dut);
+    spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
     component_do_all();
     assert((result.component == COMPONENT_NONE) || ((result.component == COMPONENT_CAP) && (result.capacitance_pF < 10.0f)));
 
@@ -37,8 +37,8 @@ int test_bjt_pnp(int argc, char *argv[])
 
     for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
     {
-        asprintf(&dut[1], "q1 /tp%u /tp%u /tp%u 2N3906 temp=27", probes[i][1] + 1, probes[i][0] + 1, probes[i][2] + 1);
-        spice_dut_set(dut);
+        asprintf(&dut[1], "q1 /t%u /t%u /t%u 2n3906", probes[i][1], probes[i][0], probes[i][2]);
+        spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
         component_do_all();
         assert(result.component == COMPONENT_BJT);
         assert(result.subtype == 2);

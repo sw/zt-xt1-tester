@@ -1,5 +1,5 @@
 #include <string.h>
-#if __ARM_EABI__
+#ifdef __ARM_EABI__
 #include "n32g031_flash.h"
 #endif
 #include "calib.h"
@@ -31,7 +31,7 @@ void calib_default(void)
 
 void calib_write(void)
 {
-#if __ARM_EABI__
+#ifdef __ARM_EABI__
     FLASH_Unlock();
     FLASH_EraseOnePage(FLASH_ADDR);
 #else

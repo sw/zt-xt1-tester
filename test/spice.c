@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -11,11 +12,24 @@
 #include "spice.h"
 #include "timer.h"
 
+static int spice_command(const char *fmt, ...)
+{
+    char *p;
+    va_list args;
+    va_start(args, fmt);
+    vasprintf(&p, fmt, args);
+    va_end(args);
+    // printf("%s; ", p);
+    int e = ngSpice_Command(p);
+    free(p);
+    return e;
+}
+
 static int send_char(char *s, int id, void *user)
 {
+    // puts(s);
     assert((strncmp(s, "stderr Warning:", strlen("stderr Warning:")) != 0)
         || (strncmp(s, "stderr Warning: losing old state for circuit", strlen("stderr Warning: losing old state for circuit")) == 0) );
-    //puts(s);
 }
 
 static int send_stat(char *stat, int id, void *user)
@@ -34,39 +48,34 @@ static int controlled_exit(int status, NG_BOOL immediate, NG_BOOL quit, int id, 
 
 static float adc_val[8];
 static unsigned int comp_probe;
-static char comp_probe_s[4 + 1];
+static char comp_probe_s[3 + 1];
 static float comp_threshold;
-static uint_fast8_t comp_vref_sel;
-static uint_fast32_t comp_cnt;
-static unsigned int comp_step;
-static unsigned int comp_pullup;
+static double spice_time;
 
 static int send_data(pvecvaluesall vec_vals, int num, int id, void *user)
 {
-    // printf("%s num=%d veccount=%d vecindex=%d\n", __FUNCTION__, num, vec_vals->veccount, vec_vals->vecindex);
     for (int i = 0; i < vec_vals->veccount; i++)
     {
         vecvalues *v = vec_vals->vecsa[i];
-        if (comp_step)
+        // if (strcmp(v->name, comp_probe_s) == 0) { printf("COMP %.3fV\n", v->creal); }
+        if (strcmp(v->name, "time") == 0)
         {
-            if (strcmp(v->name, comp_probe_s) == 0)
-            {
-                comp_cnt += comp_step;
-            }
+            spice_time = v->creal;
+            assert(spice_time < 7.9); /* .tran stop sufficient? */
         }
-        else if (strcmp(v->name, "/ad1") == 0)
+        else if (strcmp(v->name, "/a0") == 0)
         {
-            //printf("AD1 %.3fV\n", v->creal);
+            //printf("a0 %.3fV\n", v->creal);
             adc_val[1] = v->creal;
         }
-        else if (strcmp(v->name, "/ad2") == 0)
+        else if (strcmp(v->name, "/a1") == 0)
         {
-            //printf("AD2 %.3fV\n", v->creal);
+            //printf("a1 %.3fV\n", v->creal);
             adc_val[3] = v->creal;
         }
-        else if (strcmp(v->name, "/ad3") == 0)
+        else if (strcmp(v->name, "/a2") == 0)
         {
-            //printf("AD3 %.3fV\n", v->creal);
+            //printf("a2 %.3fV\n", v->creal);
             adc_val[7] = v->creal;
         }
     }
@@ -89,7 +98,7 @@ void spice_init(void)
 
 void spice_uninit(void)
 {
-    ngSpice_Command("quit");
+    spice_command("quit");
 }
 
 static struct
@@ -98,9 +107,6 @@ static struct
     probe_mode_t r680;
     probe_mode_t r470k;
 } probes[3];
-
-static uint_fast32_t sleep_ms;
-static bool op_ready;
 
 static spice_probe_settings_t probe_settings =
 {
@@ -113,7 +119,6 @@ static spice_probe_settings_t probe_settings =
     .probe31_cap = 27.93f,
     .probe32_cap = 26.70f,
 };
-static char **dut;
 
 void spice_probe_settings_set(const spice_probe_settings_t *settings)
 {
@@ -137,12 +142,6 @@ void spice_probe_settings_set(const spice_probe_settings_t *settings)
     probe_settings = *settings;
 }
 
-void spice_dut_set(char **s)
-{
-    dut = s;
-    op_ready = false;
-}
-
 void probe_configure(uint_fast8_t probe, probe_mode_t direct, probe_mode_t r680, probe_mode_t r470k)
 {
     assert(probe < 3);
@@ -152,15 +151,36 @@ void probe_configure(uint_fast8_t probe, probe_mode_t direct, probe_mode_t r680,
     probes[probe].direct = direct;
     probes[probe].r680 = r680;
     probes[probe].r470k = r470k;
-    op_ready = false;
+
+    spice_command("alter v%u0 = %u", probe, direct == PROBE_DRV_LO ? 5 : 0);
+    spice_command("alter v%u1 = %u", probe, direct == PROBE_DRV_HI ? 0 : 5);
+    spice_command("alter v%u2 = %u", probe, r680   == PROBE_DRV_LO ? 5 : 0);
+    spice_command("alter v%u3 = %u", probe, r680   == PROBE_DRV_HI ? 0 : 5);
+    spice_command("alter v%u4 = %u", probe, r470k  == PROBE_DRV_LO ? 5 : 0);
+    spice_command("alter v%u5 = %u", probe, r470k  == PROBE_DRV_HI ? 0 : 5);
+}
+
+static unsigned int breakpoint_counter;
+void tim6_usleep(uint_fast32_t us)
+{
+    /*
+        Warning: stupidity
+        We have to use breakpoints with condition "time >= x" to allow for arbitrary resolution.
+        These breakpoints then have to be removed or they will hit again immediately.
+        Unfortunately, ngspice numbers them incrementally.
+    */
+    spice_command("stop when time >= %f", fmax(spice_time + us / 1e6, nextafter(spice_time, INFINITY)));
+    spice_command("resume");
+    spice_command("delete %u", ++breakpoint_counter);
 }
 
 void tim6_msleep(uint_fast32_t ms)
 {
-    sleep_ms = ms;
+    assert(ms < UINT_FAST32_MAX / 1000);
+    tim6_usleep(ms * 1000);
 }
 
-static void spice_prepare(const char *analysis, ...)
+void spice_dut_set(char **dut, double t_step)
 {
     char *circ_a[64];
     int i = 0;
@@ -170,24 +190,24 @@ static void spice_prepare(const char *analysis, ...)
     circ_a[i++] = strdup(".title Component Tester");
 
     /* supply rails */
-    circ_a[i++] = strdup("v1 +5V 0 dc 5");
+    circ_a[i++] = strdup("v0 +5V 0 dc 5");
 
     /* probe resistors */
-    circ_a[i++] = strdup("r11 /s1 /tp1 680");
-    circ_a[i++] = strdup("r21 /s2 /tp2 680");
-    circ_a[i++] = strdup("r31 /s3 /tp3 680");
-    circ_a[i++] = strdup("r12 /w1 /tp1 470k");
-    circ_a[i++] = strdup("r22 /w2 /tp2 470k");
-    circ_a[i++] = strdup("r32 /w3 /tp3 470k");
+    circ_a[i++] = strdup("r00 /s0 /t0 680");
+    circ_a[i++] = strdup("r10 /s1 /t1 680");
+    circ_a[i++] = strdup("r20 /s2 /t2 680");
+    circ_a[i++] = strdup("r01 /w0 /t0 470k");
+    circ_a[i++] = strdup("r11 /w1 /t1 470k");
+    circ_a[i++] = strdup("r21 /w2 /t2 470k");
 
     /* ADC input resistances */
-    circ_a[i++] = strdup("r10 /ad1 /tp1 1500");
-    circ_a[i++] = strdup("r20 /ad2 /tp2 1500");
-    circ_a[i++] = strdup("r30 /ad3 /tp3 1500");
+    circ_a[i++] = strdup("r02 /a0 /t0 1500");
+    circ_a[i++] = strdup("r12 /a1 /t1 1500");
+    circ_a[i++] = strdup("r22 /a2 /t2 1500");
     /* ADC sample and hold capacitors */
-    circ_a[i++] = strdup("c10 0 /ad1 13p");
-    circ_a[i++] = strdup("c20 0 /ad2 13p");
-    circ_a[i++] = strdup("c30 0 /ad3 13p");
+    circ_a[i++] = strdup("c00 0 /a0 13p");
+    circ_a[i++] = strdup("c10 0 /a1 13p");
+    circ_a[i++] = strdup("c20 0 /a2 13p");
 
     /* GPIO MOSFETs */
     /*
@@ -196,7 +216,7 @@ static void spice_prepare(const char *analysis, ...)
             A  - Non-linear Cgd capacitance parameter
     */
     /* TODO: figure out how to use probe_settings.probeXX_cap */
-    asprintf(&circ_a[i++], ".model NMOS VDMOS NCHAN "
+    asprintf(&circ_a[i++], ".model nmos vdmos nchan "
         "cgdmax=2p "
         "cgdmin=2p "
         "cgs=2p "
@@ -204,7 +224,7 @@ static void spice_prepare(const char *analysis, ...)
         "rd=%.0f "
         "vto=+1.5"
         , probe_settings.rd);
-    asprintf(&circ_a[i++], ".model PMOS VDMOS PCHAN "
+    asprintf(&circ_a[i++], ".model pmos vdmos pchan "
         "cgdmax=2p "
         "cgdmin=2p "
         "cgs=2p "
@@ -213,110 +233,47 @@ static void spice_prepare(const char *analysis, ...)
         "vto=-1.5"
         , probe_settings.rp);
 
-    /* TODO: tame this mess */
-    /* use a pulsed voltage source to drive the PMOS gates so the initial condition will have a different value */
-    circ_a[i++] = strdup("v2 /pg 0 pulse(5 0)");
+    circ_a[i++] = strdup("v00 /g00 0 dc 0");
+    circ_a[i++] = strdup("v01 /g01 0 dc 5");
+    circ_a[i++] = strdup("v02 /g02 0 dc 0");
+    circ_a[i++] = strdup("v03 /g03 0 dc 5");
+    circ_a[i++] = strdup("v04 /g04 0 dc 0");
+    circ_a[i++] = strdup("v05 /g05 0 dc 5");
 
-    if (comp_step && (comp_probe == 0) && (comp_pullup == 0))
-    {
-        circ_a[i++] = strdup("MQ11 /TP1 /pg  0  NMOS");
-        circ_a[i++] = strdup("MQ12 /TP1 /pg +5V PMOS");
-    }
-    else
-    {
-        asprintf(&circ_a[i++], "MQ11 /TP1 %s  0  NMOS", probes[0].direct == PROBE_DRV_LO ? "+5V" : " 0 ");
-        asprintf(&circ_a[i++], "MQ12 /TP1 %s +5V PMOS", probes[0].direct == PROBE_DRV_HI ? " 0 " : "+5V");
-    }
+    circ_a[i++] = strdup("v10 /g10 0 dc 0");
+    circ_a[i++] = strdup("v11 /g11 0 dc 5");
+    circ_a[i++] = strdup("v12 /g12 0 dc 0");
+    circ_a[i++] = strdup("v13 /g13 0 dc 5");
+    circ_a[i++] = strdup("v14 /g14 0 dc 0");
+    circ_a[i++] = strdup("v15 /g15 0 dc 5");
 
-    if (comp_step && (comp_probe == 0) && (comp_pullup == 1))
-    {
-        circ_a[i++] = strdup("MQ13 /S1 /pg  0  NMOS");
-        circ_a[i++] = strdup("MQ14 /S1 /pg +5V PMOS");
-    }
-    else
-    {
-        asprintf(&circ_a[i++], "MQ13 /S1 %s  0  NMOS", probes[0].r680 == PROBE_DRV_LO ? "+5V" : " 0 ");
-        asprintf(&circ_a[i++], "MQ14 /S1 %s +5V PMOS", probes[0].r680 == PROBE_DRV_HI ? " 0 " : "+5V");
-    }
+    circ_a[i++] = strdup("v20 /g20 0 dc 0");
+    circ_a[i++] = strdup("v21 /g21 0 dc 5");
+    circ_a[i++] = strdup("v22 /g22 0 dc 0");
+    circ_a[i++] = strdup("v23 /g23 0 dc 5");
+    circ_a[i++] = strdup("v24 /g24 0 dc 0");
+    circ_a[i++] = strdup("v25 /g25 0 dc 5");
 
-    if (comp_step && (comp_probe == 0) && (comp_pullup == 2))
-    {
-        circ_a[i++] = strdup("MQ15 /W1 /pg  0  NMOS");
-        circ_a[i++] = strdup("MQ16 /W1 /pg +5V PMOS");
-    }
-    else
-    {
-        asprintf(&circ_a[i++], "MQ15 /W1 %s  0  NMOS", probes[0].r470k == PROBE_DRV_LO ? "+5V" : " 0 ");
-        asprintf(&circ_a[i++], "MQ16 /W1 %s +5V PMOS", probes[0].r470k == PROBE_DRV_HI ? " 0 " : "+5V");
-    }
+    circ_a[i++] = strdup("mq00 /t0 /g00  0  nmos");
+    circ_a[i++] = strdup("mq01 /t0 /g01 +5v pmos");
+    circ_a[i++] = strdup("mq02 /s0 /g02  0  nmos");
+    circ_a[i++] = strdup("mq03 /s0 /g03 +5v pmos");
+    circ_a[i++] = strdup("mq04 /w0 /g04  0  nmos");
+    circ_a[i++] = strdup("mq05 /w0 /g05 +5v pmos");
 
+    circ_a[i++] = strdup("mq10 /t1 /g10  0  nmos");
+    circ_a[i++] = strdup("mq11 /t1 /g11 +5v pmos");
+    circ_a[i++] = strdup("mq12 /s1 /g12  0  nmos");
+    circ_a[i++] = strdup("mq13 /s1 /g13 +5v pmos");
+    circ_a[i++] = strdup("mq14 /w1 /g14  0  nmos");
+    circ_a[i++] = strdup("mq15 /w1 /g15 +5v pmos");
 
-    if (comp_step && (comp_probe == 1) && (comp_pullup == 0))
-    {
-        circ_a[i++] = strdup("MQ21 /TP2 /pg  0  NMOS");
-        circ_a[i++] = strdup("MQ22 /TP2 /pg +5V PMOS");
-    }
-    else
-    {
-        asprintf(&circ_a[i++], "MQ21 /TP2 %s  0  NMOS", probes[1].direct == PROBE_DRV_LO ? "+5V" : " 0 ");
-        asprintf(&circ_a[i++], "MQ22 /TP2 %s +5V PMOS", probes[1].direct == PROBE_DRV_HI ? " 0 " : "+5V");
-    }
-    
-    if (comp_step && (comp_probe == 1) && (comp_pullup == 1))
-    {
-        circ_a[i++] = strdup("MQ23 /S2 /pg  0  NMOS");
-        circ_a[i++] = strdup("MQ24 /S2 /pg +5V PMOS");
-    }
-    else
-    {
-        asprintf(&circ_a[i++], "MQ23 /S2 %s  0  NMOS", probes[1].r680 == PROBE_DRV_LO ? "+5V" : " 0 ");
-        asprintf(&circ_a[i++], "MQ24 /S2 %s +5V PMOS", probes[1].r680 == PROBE_DRV_HI ? " 0 " : "+5V");
-    }
-
-    if (comp_step && (comp_probe == 1) && (comp_pullup == 2))
-    {
-        circ_a[i++] = strdup("MQ25 /W2 /pg  0  NMOS");
-        circ_a[i++] = strdup("MQ26 /W2 /pg +5V PMOS");
-    }
-    else
-    {
-        asprintf(&circ_a[i++], "MQ25 /W2 %s  0  NMOS", probes[1].r470k == PROBE_DRV_LO ? "+5V" : " 0 ");
-        asprintf(&circ_a[i++], "MQ26 /W2 %s +5V PMOS", probes[1].r470k == PROBE_DRV_HI ? " 0 " : "+5V");
-    }
-
-    
-    if (comp_step && (comp_probe == 2) && (comp_pullup == 0))
-    {
-        circ_a[i++] = strdup("MQ31 /TP3 /pg  0  NMOS");
-        circ_a[i++] = strdup("MQ32 /TP3 /pg +5V PMOS");
-    }
-    else
-    {
-        asprintf(&circ_a[i++], "MQ31 /TP3 %s  0  NMOS", probes[2].direct == PROBE_DRV_LO ? "+5V" : " 0 ");
-        asprintf(&circ_a[i++], "MQ32 /TP3 %s +5V PMOS", probes[2].direct == PROBE_DRV_HI ? " 0 " : "+5V");
-    }
-
-    if (comp_step && (comp_probe == 2) && (comp_pullup == 1))
-    {
-        circ_a[i++] = strdup("MQ33 /S3 /pg  0  NMOS");
-        circ_a[i++] = strdup("MQ34 /S3 /pg +5V PMOS");
-    }
-    else
-    {
-        asprintf(&circ_a[i++], "MQ33 /S3 %s  0  NMOS", probes[2].r680 == PROBE_DRV_LO ? "+5V" : " 0 ");
-        asprintf(&circ_a[i++], "MQ34 /S3 %s +5V PMOS", probes[2].r680 == PROBE_DRV_HI ? " 0 " : "+5V");
-    }
-
-    if (comp_step && (comp_probe == 2) && (comp_pullup == 2))
-    {
-        circ_a[i++] = strdup("MQ35 /W3 /pg  0  NMOS");
-        circ_a[i++] = strdup("MQ36 /W3 /pg +5V PMOS");
-    }
-    else
-    {
-        asprintf(&circ_a[i++], "MQ35 /W3 %s  0  NMOS", probes[2].r470k == PROBE_DRV_LO ? "+5V" : " 0 ");
-        asprintf(&circ_a[i++], "MQ36 /W3 %s +5V PMOS", probes[2].r470k == PROBE_DRV_HI ? " 0 " : "+5V");
-    }
+    circ_a[i++] = strdup("mq20 /t2 /g20  0  nmos");
+    circ_a[i++] = strdup("mq21 /t2 /g21 +5v pmos");
+    circ_a[i++] = strdup("mq22 /s2 /g22  0  nmos");
+    circ_a[i++] = strdup("mq23 /s2 /g23 +5v pmos");
+    circ_a[i++] = strdup("mq24 /w2 /g24  0  nmos");
+    circ_a[i++] = strdup("mq25 /w2 /g25 +5v pmos");
 
     /* DUT */
     for (int d = 0; dut[d]; d++)
@@ -324,10 +281,7 @@ static void spice_prepare(const char *analysis, ...)
         circ_a[i++] = strdup(dut[d]);
     }
 
-    va_list args;
-    va_start(args, analysis);
-    vasprintf(&circ_a[i++], analysis, args);
-    va_end(args);
+    asprintf(&circ_a[i++], ".tran %f 8", t_step);
 
     circ_a[i++] = strdup(".end");
     circ_a[i++] = NULL;
@@ -340,16 +294,16 @@ static void spice_prepare(const char *analysis, ...)
     {
         free(circ_a[i]);
     }
+
+    // spice_command("listing deck");
+
+    spice_command("stop when time = 1u");
+    spice_command("run");
+    spice_command("delete %u", ++breakpoint_counter);
 }
 
 uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
 {
-    if (!op_ready)
-    {
-        spice_prepare(".op");
-        ngSpice_Command("run");
-        op_ready = true;
-    }
     int val = adc_val[channel] * (4095.0f / 5.0f);
     if (val < 0)
     {
@@ -366,7 +320,6 @@ void comp_init(uint_fast8_t probe, uint_fast8_t vref_sel)
 {
     assert(probe < 3);
     comp_probe = probe;
-    snprintf(comp_probe_s, sizeof(comp_probe_s), "/ad%u", probe + 1);
     assert(vref_sel < 64);
     comp_threshold = vref_sel * (5.0f / 63.0f); /* TODO: 63 or 64? */
 }
@@ -374,32 +327,25 @@ void comp_init(uint_fast8_t probe, uint_fast8_t vref_sel)
 uint_fast32_t comp_start(unsigned int unused, unsigned int pullup, uint_fast32_t timeout)
 {
     assert(pullup < 3);
+    printf("%s(%u, %lu)\n", __FUNCTION__, pullup, timeout);
 
-    op_ready = false;
-    comp_pullup = pullup;
+    snprintf(comp_probe_s, sizeof(comp_probe_s), "/a%u", comp_probe);
 
-    char *stop;
-    asprintf(&stop, "stop when v(%s) > %f", comp_probe_s, comp_threshold);
+    /* simulate direct write to GPIO PBSC register to pull probe high */
+    spice_command("alter v%u%u = 0", comp_probe, pullup * 2);
+    spice_command("alter v%u%u = 0", comp_probe, pullup * 2 + 1);
 
-    /* speed up by doing coarse simulation step first */
-    uint_fast32_t limit;
-    for (comp_step = 100, limit = timeout / 100;
-         comp_step;
-         comp_step /= 10, limit /= 10)
-    {
-        comp_cnt = 0;
-        /* TODO: investigate uic */
-        spice_prepare(".tran %fns %fms", comp_step / (48e6 / 1e9), timeout / (48e6 / 1e3));
-        ngSpice_Command(stop);
-        ngSpice_Command("run");
+    double start = spice_time;
+    printf("start=%f end=%f\n", start, spice_time + (timeout + 3) / 48e6);
 
-        if (comp_cnt > limit)
-        {
-            break;
-        }
-    }
+    /* add a few ticks to ensure simulation doesn't stop a few ticks earlier than timeout */
+    spice_command("stop when time >= %f", spice_time + (timeout + 3) / 48e6);
+    spice_command("stop when v(%s) > %f", comp_probe_s, comp_threshold);
+    spice_command("resume");
+    spice_command("delete %u", ++breakpoint_counter);
+    spice_command("delete %u", ++breakpoint_counter);
 
-    free(stop);
-    comp_step = 0;
-    return comp_cnt;
+    printf("%s end=%f cnt=%lu\n", __FUNCTION__, spice_time, (uint_fast32_t)((spice_time - start) * 48e6));
+    comp_probe_s[0] = '\0';
+    return (spice_time - start) * 48e6;
 }

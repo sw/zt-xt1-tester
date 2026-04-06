@@ -23,7 +23,7 @@ int test_diode(int argc, char *argv[])
     assert(i <= sizeof(dut) / sizeof(dut[0]));
 
     /* sanity check: no device connected */
-    spice_dut_set(dut);
+    spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
     component_do_all();
     assert((result.component == COMPONENT_NONE) || ((result.component == COMPONENT_CAP) && (result.capacitance_pF < 10.0f)));
 
@@ -39,17 +39,17 @@ int test_diode(int argc, char *argv[])
 
     for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
     {
-        asprintf(&dut[2], "d1 /tp%u /tp%u DI_1N4001", probes[i][0] + 1, probes[i][1] + 1);
-        spice_dut_set(dut);
+        asprintf(&dut[2], "d1 /t%u /t%u di_1n4001", probes[i][0], probes[i][1]);
+        spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
         component_do_all();
         assert(result.component == COMPONENT_DIODE);
         assert(fabsf(result.diode_vf - 0.68f) < 0.01f);
 
-        /* TODO: why the variation? */
+        /* TODO: original firmware has no delay in diode_forward_reverse, measures higher reverse current */
         assert(0.0f <= result.diode_ir_mA);
-        assert(result.diode_ir_mA < 0.0076f);
-        assert(0.0f <= result.capacitance_pF);
-        assert(result.capacitance_pF < 39.0f);
+        assert(result.diode_ir_mA < 0.1f);
+        assert(20.0f < result.capacitance_pF);
+        assert(result.capacitance_pF < 33.0f);
 
         assert(result.probes[0] == probes[i][0]);
         assert(result.probes[1] == probes[i][1]);
@@ -64,34 +64,34 @@ int test_diode(int argc, char *argv[])
     */
     for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
     {
-        asprintf(&dut[2], "d1 /tp%u /tp%u DI_1N5819", probes[i][0] + 1, probes[i][1] + 1);
+        asprintf(&dut[2], "d1 /t%u /t%u di_1n5819", probes[i][0], probes[i][1]);
 
-        asprintf(&dut[3], "d2 /tp%u /tp%u DI_1N4001", probes[i][0] + 1, probes[i][2] + 1);
-        spice_dut_set(dut);
+        asprintf(&dut[3], "d2 /t%u /t%u di_1n4001", probes[i][0], probes[i][2]);
+        spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
         component_do_all();
         assert(result.component == COMPONENT_2DIODE);
         assert(fabsf(result.diode_vf_a[i] - 0.43f) < 0.01f);
         assert(fabsf(result.diode_vf_a[(i + (i % 3 + 2)) % 6] - 5.0f) < 0.01f);
         free(dut[3]);
 
-        asprintf(&dut[3], "d2 /tp%u /tp%u DI_1N4001", probes[i][1] + 1, probes[i][2] + 1);
-        spice_dut_set(dut);
+        asprintf(&dut[3], "d2 /t%u /t%u di_1n4001", probes[i][1], probes[i][2]);
+        spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
         component_do_all();
         assert(result.component == COMPONENT_2DIODE);
         assert(fabsf(result.diode_vf_a[i] - 0.43f) < 0.01f);
         assert(fabsf(result.diode_vf_a[(i + (i % 3 + 2)) % 6] - 5.0f) < 0.01f);
         free(dut[3]);
 
-        asprintf(&dut[3], "d2 /tp%u /tp%u DI_1N4001", probes[i][2] + 1, probes[i][0] + 1);
-        spice_dut_set(dut);
+        asprintf(&dut[3], "d2 /t%u /t%u di_1n4001", probes[i][2], probes[i][0]);
+        spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
         component_do_all();
         assert(result.component == COMPONENT_2DIODE);
         assert(fabsf(result.diode_vf_a[i] - 0.43f) < 0.01f);
         assert(fabsf(result.diode_vf_a[(i + (i % 3 + 2)) % 6] - 5.0f) < 0.01f);
         free(dut[3]);
 
-        asprintf(&dut[3], "d2 /tp%u /tp%u DI_1N4001", probes[i][2] + 1, probes[i][1] + 1);
-        spice_dut_set(dut);
+        asprintf(&dut[3], "d2 /t%u /t%u di_1n4001", probes[i][2], probes[i][1]);
+        spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
         component_do_all();
         assert(result.component == COMPONENT_2DIODE);
         assert(fabsf(result.diode_vf_a[i] - 0.43f) < 0.01f);

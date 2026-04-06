@@ -1,5 +1,5 @@
 #include <math.h>
-#if __ARM_EABI__
+#ifdef __ARM_EABI__
 #include "n32g031_gpio.h"
 #include "n32g031_tim.h"
 #endif
@@ -7,6 +7,7 @@
 #include "cap.h"
 #include "comp.h"
 #include "globals.h"
+#include "helpers.h"
 #include "probe.h"
 #include "timer.h"
 
@@ -36,13 +37,13 @@ static void cap_bat_find(void)
             probe_configure(probes[i][1], PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
             tim6_msleep(10);
             u = adc_average(channels[probes[i][1]], 100) * (5.0f / 4095.0f);
-            /* 
+            /*
                 Charging a 55uF capacitor for 10ms through 680ohms from 0V takes it to 1.17V.
                 Bigger capacitors will have a lower voltage.
             */
             if (u < 2.0f)
             {
-                tim6_msleep(1000); /* TODO: simulation */
+                tim6_msleep(1000);
                 float u2 = adc_average(channels[probes[i][1]], 100) * (5.0f / 4095.0f);
                 /* in 1s, a 100mF capacitor will charge to 73mV */
                 if (u2 > u + 0.05f)
@@ -87,9 +88,9 @@ static void cap_bat_find(void)
     probe_configure(2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
 }
 
-bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool subtract_probe)
+bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_probe)
 {
-#if __ARM_EABI__
+#ifdef __ARM_EABI__
     static GPIO_Module *const r470k_gpios[3] = { GPIOA, GPIOA, GPIOB };
     static const uint16_t r470k_pins[3] = { GPIO_PIN_2, GPIO_PIN_5, GPIO_PIN_1 };
 #else
@@ -130,8 +131,8 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool su
         probe_cap = calibration.probe23_cap;
     }
 
-    /* p2 is not initialised in the original firmware, how does this even work??? */
-    probe_configure(p2_unused, PROBE_ANALOG, PROBE_ANALOG /*PROBE_DRV_HI*/, PROBE_ANALOG);
+    /* p2 is not initialised in the original firmware, leading to wrong values or probe numbering */
+    probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
 
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_DRV_LO);
@@ -142,8 +143,15 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool su
     /* maximum value of 90nF would need ~3.4 megaticks */
     static const uint_fast32_t timeout = 48000000 / 10;
     uint32_t cnt = comp_start(r470k_gpios[p1], r470k_pins[p1], timeout);
+
+    /* probes are not reset in the original firmware, leading to wrong values or probe numbering */
+    probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    tim6_usleep(1);
+
     if (cnt >= timeout)
     {
+        result.capacitance_pF = 0.0f;
         return false;
     }
 
@@ -161,7 +169,7 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2_unused, bool su
     return true;
 }
 
-#if __ARM_EABI__
+#ifdef __ARM_EABI__
 static GPIO_Module *const r680_gpios[3] = { GPIOA, GPIOA, GPIOA };
 static const uint16_t r680_pins[3] = { GPIO_PIN_0, GPIO_PIN_4, GPIO_PIN_6 };
 #else
@@ -175,7 +183,7 @@ void cap_medium(unsigned int p0, unsigned int p1, unsigned int p2)
     probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    //probe_discharge(p0, p1);
+    probe_discharge(p0, p1);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     tim6_msleep(100);
     const uint_fast8_t vref = 32;
@@ -194,32 +202,36 @@ void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
     probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    tim6_usleep(1); /* not in original firmware, required for simulation */
     float u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
     if (u < 0.3f)
     {
         while (true)
         {
+            tim6_usleep(1); /* not in original firmware, required for simulation */
             u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
             if (0.3f < u)
             {
                 break;
             }
-            IWDG_ReloadKey();
+            iwdg_reload();
         }
     }
 
     probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    tim6_usleep(1); /* not in original firmware, required for simulation */
     adc_average(channels[p0], 100);
     adc_average(channels[p1], 100);
     while (true)
     {
+        tim6_usleep(1); /* not in original firmware, required for simulation */
         u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
         if (0.01f < u)
         {
             break;
         }
-        IWDG_ReloadKey();
+        iwdg_reload();
     }
 
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
@@ -310,6 +322,7 @@ bool cap_bat(void)
         {
             return false;
         }
+        debug_log("found cap C=%.0fpF\n", c_max);
         result.capacitance_pF = c_max;
         result.component = COMPONENT_CAP;
         result.probes[0] = probes[max_idx][0];

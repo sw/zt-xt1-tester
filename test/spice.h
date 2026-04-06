@@ -15,4 +15,6 @@ typedef struct
 void spice_init(void);
 void spice_uninit(void);
 void spice_probe_settings_set(const spice_probe_settings_t *settings);
-void spice_dut_set(char **s);
+
+#define SPICE_TSTEP_DEFAULT 1e-6
+void spice_dut_set(char **dut, double t_step);

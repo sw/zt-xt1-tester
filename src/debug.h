@@ -1,6 +1,6 @@
 #pragma once
 
-#if __ARM_EABI__
+#ifdef __ARM_EABI__
     #define assert(c) if (!(c)) __builtin_unreachable()
     #define static_assert _Static_assert
     #define debug_log(...)

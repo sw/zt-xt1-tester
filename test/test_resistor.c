@@ -20,7 +20,7 @@ int test_resistor(int argc, char *argv[])
     assert(i <= sizeof(dut) / sizeof(dut[0]));
 
     /* sanity check: no device connected */
-    spice_dut_set(dut);
+    spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
     component_do_all();
     fflush(stdout);
     assert((result.component == COMPONENT_NONE) || ((result.component == COMPONENT_CAP) && (result.capacitance_pF < 10.0f)));
@@ -32,8 +32,8 @@ int test_resistor(int argc, char *argv[])
     {
         for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
         {
-            asprintf(&dut[0], "r1 /tp%u /tp%u %f", probes[i][0] + 1, probes[i][1] + 1, r);
-            spice_dut_set(dut);
+            asprintf(&dut[0], "r1 /t%u /t%u %f", probes[i][0], probes[i][1], r);
+            spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
             component_do_all();
             assert(result.component == COMPONENT_RESISTOR);
             assert(fabsf(result.resistance - r) < r * 0.02f + 0.5f);

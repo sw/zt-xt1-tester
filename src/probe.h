@@ -11,3 +11,4 @@ typedef enum
 } probe_mode_t;
 
 void probe_configure(uint_fast8_t probe, probe_mode_t direct, probe_mode_t r680, probe_mode_t r470k);
+void probe_discharge(uint_fast8_t p0, uint_fast8_t p1);

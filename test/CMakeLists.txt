@@ -10,7 +10,7 @@ set(TESTS
 
 create_test_sourcelist(SOURCES_TEST test_driver.c ${TESTS})
 
-add_executable(${PROJECT_NAME} ${SOURCES} ${SOURCES_TEST} misc.c spice.c)
+add_executable(${PROJECT_NAME} ${SOURCES} ${SOURCES_TEST} helpers.c spice.c)
 
 target_link_libraries(${PROJECT_NAME} m ngspice)
 

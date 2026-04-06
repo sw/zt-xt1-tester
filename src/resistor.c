@@ -1,14 +1,15 @@
-#include <math.h>
 #include "adc.h"
 #include "component.h"
 #include "debug.h"
 #include "globals.h"
+#include "helpers.h"
 #include "probe.h"
 #include "resistor.h"
 #include "timer.h"
 
 static void resistor_range_try(unsigned int p0, unsigned int p1)
 {
+    debug_log("%s(%u, %u)\n", __FUNCTION__, p0, p1);
     resistor_measure(p0, p1, 3);
     if (result.resistance > 15e3f) { return; }
     resistor_measure(p0, p1, 2);
@@ -24,7 +25,7 @@ bool resistor(void)
         /* not a capacitor or below 700nF? */
         if ((result.component != COMPONENT_CAP) || (result.capacitance_pF < 700e3f))
         {
-            float r_min = INFINITY; /* original firmware uses 1Gohm */
+            float r_min = 1.0e9f;
             int min_idx = 0;
             for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
             {
@@ -32,14 +33,20 @@ bool resistor(void)
                 probe_configure(1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
                 probe_configure(2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
                 resistor_range_try(probes[i][0], probes[i][1]);
-                debug_log("%u %u %f\n", probes[i][0], probes[i][1], result.resistance);
                 if (!(r_min < result.resistance))
                 {
                     r_min = result.resistance;
                     min_idx = i;
                 }
             }
-            if (0x0FA51F7B <= (uint32_t)result.capacitance_pF + 0xBB767FFF) // WTF?
+
+            /* the original firmware has this monstrous compiler optimization */
+            assert(UINT32_C(0x0FA51F7B) == ~*(uint32_t *)(float []){1100.0f} + *(uint32_t *)(float []){3e12f});
+            assert(UINT32_C(0xBB767FFF) == ~*(uint32_t *)(float []){1100.0f});
+            assert((UINT32_C(0x0FA51F7B) <= *(uint32_t *)&result.capacitance_pF + UINT32_C(0xBB767FFF))
+                == ((result.capacitance_pF < 1100.0f) || (result.capacitance_pF > 3e12f)));
+
+            if ((result.capacitance_pF < 1100.0f) || (result.capacitance_pF > 3e12f))
             {
                 float r = r_min * 1.3e8f / (1.3e8f - r_min);
                 if (r < 30e6f)
@@ -71,7 +78,8 @@ void resistor_measure(int a, int b, int param)
         float aa = adc_average(channels[a], 1000);
         float ab = adc_average(channels[b], 1000);
         /* why add Rp??? */
-        result.resistance = (ab - aa) * (calibration.rd + calibration.rp) / aa;
+        result.resistance = divf((ab - aa) * (calibration.rd + calibration.rp), aa);
+        debug_log("measure 0 probes:%u %u adc=%.0f %.0f R=%.0f\n", a, b, aa, ab, result.resistance);
     }
     else
     {
@@ -85,7 +93,8 @@ void resistor_measure(int a, int b, int param)
                 tim6_msleep(100);
                 float aa = adc_average(channels[a], 1000);
                 float ab = adc_average(channels[b], 1000);
-                result.resistance = (ab - aa) * (calibration.rd + 680.0f) / aa;
+                result.resistance = divf((ab - aa) * (calibration.rd + 680.0f), aa);
+                debug_log("measure 2 probes:%u %u adc=%.0f %.0f R=%.0f\n", a, b, aa, ab, result.resistance);
             }
             else
             {
@@ -93,9 +102,14 @@ void resistor_measure(int a, int b, int param)
                 probe_configure(a, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
                 probe_configure(b, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
                 tim6_msleep(100);
-                float aa = adc_average(channels[a], 1000);
+
+                uint_fast16_t uia = adc_average(channels[a], 1000);
+                /* hack to avoid weird values after correction in main resistor function. TODO: investigate */
+                if (uia < 15) { uia = 15; }
+                float aa = uia;
+
                 float ab = adc_average(channels[b], 1000);
-                result.resistance = (ab - aa) * (calibration.rd + 470e3f) / aa;
+                result.resistance = divf((ab - aa) * (calibration.rd + 470e3f), aa);
                 debug_log("measure 3 probes:%u %u adc=%.0f %.0f R=%.0f\n", a, b, aa, ab, result.resistance);
             }
         }
@@ -106,7 +120,8 @@ void resistor_measure(int a, int b, int param)
             tim6_msleep(100);
             float ua = adc_average(channels[a], 1000) * (5.0f / 4095.0f);
             float ub = adc_average(channels[b], 1000) * (5.0f / 4095.0f);
-            result.resistance = (ub - ua) * 680.0f / (5.0f - ub);
+            result.resistance = divf((ub - ua) * 680.0f, 5.0f - ub);
+            debug_log("measure 1 probes:%u %u adc=%.0f %.0f R=%.0f\n", a, b, ua, ub, result.resistance);
         }
     }
 out:
