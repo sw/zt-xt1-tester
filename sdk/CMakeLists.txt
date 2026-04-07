@@ -37,7 +37,7 @@ add_library(N32G031_SDK STATIC ${TARGET_C_SOURCES} ${TARGET_STARTUP_ASM})
 
 # Shared sources, includes and definitions
 target_compile_definitions(N32G031_SDK PUBLIC ${TARGET_C_DEFINES})
-target_compile_options(N32G031_SDK PUBLIC -Wno-parentheses -Wno-unused-variable)
+target_compile_options(N32G031_SDK PRIVATE -Wno-parentheses -Wno-unused-variable)
 target_include_directories(N32G031_SDK
         PUBLIC ${TARGET_C_INCLUDES}
         INTERFACE ${TARGET_C_INCLUDES}

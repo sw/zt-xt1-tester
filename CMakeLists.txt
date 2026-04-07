@@ -22,7 +22,7 @@ list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/tool.c
 )
 
-if(CMAKE_BUILD_TYPE STREQUAL "Test")
+if(TEST)
     include(CTest)
     add_subdirectory(test)
 else()
