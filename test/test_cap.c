@@ -45,6 +45,7 @@ int test_cap(int argc, char *argv[])
             assert(fabsf(result.capacitance_pF - c) < c * 0.05f + 10.0f);
             /* ESR is wildly wrong... */
             assert((c < 700e3f) || ((result.resistance > 1.0f) && (result.resistance < 8.4f)));
+            assert((c < 90e3f) || ((result.cap_vloss > 1.6f) && (result.cap_vloss < 7.6f)));
             assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
                    || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
         }

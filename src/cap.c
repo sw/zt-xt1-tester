@@ -6,6 +6,7 @@
 #include "adc.h"
 #include "cap.h"
 #include "comp.h"
+#include "debug.h"
 #include "globals.h"
 #include "helpers.h"
 #include "probe.h"
@@ -333,6 +334,56 @@ static void cap_esr(unsigned int p0, unsigned int p1, bool discharge)
     result.resistance = r;
 }
 
+static void cap_vloss(unsigned int p0, unsigned int p1)
+{
+    static const unsigned int channels[3] = {1, 3, 7};
+    unsigned int num;
+    float u_charge;
+    if (result.capacitance_pF < 18e6f)
+    {
+        /* capacitance < 18uF -> charge to 2.5V 50 times */
+        num = 50;
+        u_charge = 2.5f;
+    }
+    else
+    {
+        /* this seems a bad choice, giving values of >7% instead of aroung 2..3% for <18uF */
+        u_charge = 1.25f;
+        if (result.capacitance_pF < 700e6f)
+        {
+            /* capacitance < 700uF -> charge to 1.25V 5 times */
+            num = 5;
+        }
+        else
+        {
+            /* capacitance > 700uF -> charge to 1.25V one time */
+            num = 1;
+        }
+    }
+    float sum = 0.0;
+    for (int i = 0; i < num; i++)
+    {
+        probe_discharge(p0, p1);
+        probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+        float u_before = 0.0f;
+        while (u_before < u_charge)
+        {
+#ifndef __ARM_EABI__
+            tim6_usleep(1);
+#endif
+            /* here, 2^12 is actually used instead of 2^12-1. go figure... */
+            u_before = adc_average(channels[p1], 1) * (5.0f / 4096.0f);
+            iwdg_reload();
+        }
+        probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+        tim6_usleep(10);
+        float u_after = adc_average(channels[p1], 1) * (5.0f / 4096.0f);
+        sum += (u_before - u_after) * 100.0f / u_before;
+    }
+    result.cap_vloss = sum / num;
+    debug_log("Vloss=%.2f%%\n", result.cap_vloss);
+}
+
 bool cap_bat(void)
 {
     static const unsigned int probes[3][3] =
@@ -356,7 +407,7 @@ bool cap_bat(void)
             if (55e6f < result.capacitance_pF) /* >55uF? */
             {
                 cap_esr(result.probes[0], result.probes[2], true);
-                // cap_vloss(result.probes[0], result.probes[2]);
+                cap_vloss(result.probes[0], result.probes[2]);
                 return true;
             }
         }
@@ -378,7 +429,7 @@ bool cap_bat(void)
                     But the ESR value is not displayed below 700nF.
                 */
                 cap_esr(result.probes[0], result.probes[2], true);
-                // cap_vloss(result.probes[0], result.probes[2]);
+                cap_vloss(result.probes[0], result.probes[2]);
                 return true;
             }
         }
