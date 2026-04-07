@@ -8,7 +8,7 @@ void adc_init(void)
     ADC_InitType ADC_InitStruct;
     OPAMP_InitType OPAMP_InitStruct;
     FlagStatus flag;
-    
+
     /* timing clock must be 1MHz */
     RCC_ConfigAdc1mClk(RCC_ADC1MCLK_SRC_HSI, RCC_ADC1MCLK_DIV8);
     /* set sampling clock to AHB_CLK / 6 = 8MHz */
@@ -42,12 +42,32 @@ void adc_init(void)
     gpio_init(GPIOF, GPIO_PIN_0, GPIO_MODE_ANALOG, GPIO_NO_PULL);
 }
 
+uint_fast16_t adc_single(uint_fast8_t channel)
+{
+    #define CTRL2_EXT_TRIG_SWSTART_SET   ((uint32_t)0x00500000)
+
+    /* original firmware sets SAMPT2 to zero, but that is for channels 8 to 15 */
+    ADC->SAMPT2 = 0;
+    ADC->RSEQ3 = channel;
+
+    /* erratum 5.2? throw away first conversion result */
+    ADC->STS = 0;
+    ADC->CTRL2 |= CTRL2_EXT_TRIG_SWSTART_SET;
+    while (!(ADC->STS & ADC_FLAG_ENDC)) { }
+
+    ADC->STS = 0;
+    ADC->CTRL2 |= CTRL2_EXT_TRIG_SWSTART_SET;
+    while (!(ADC->STS & ADC_FLAG_ENDC)) { }
+
+    return ADC->DAT;
+}
+
 uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
 {
     uint_fast16_t i;
     uint_fast32_t sum = 0;
     assert(num < UINT_FAST32_MAX / 0xFFF);
-  
+
     ADC_ConfigRegularChannel(ADC, channel, 1, adc_sampletime);
 
     /* erratum 5.2? throw away first conversion result */

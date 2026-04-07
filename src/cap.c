@@ -147,7 +147,9 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_
     /* probes are not reset in the original firmware, leading to wrong values or probe numbering */
     probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+#ifndef __ARM_EABI__
     tim6_usleep(1);
+#endif
 
     if (cnt >= timeout)
     {
@@ -165,7 +167,7 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_
     {
         result.capacitance_pF -= probe_cap;
     }
-    debug_log("cnt=%u C=%fpF\n", cnt, result.capacitance_pF);
+    debug_log("cnt=%u C=%.1fpF\n", cnt, result.capacitance_pF);
     return true;
 }
 
@@ -177,7 +179,7 @@ static const unsigned int r680_gpios[3] = { 0 };
 static const unsigned int r680_pins[3] = { 1, 1, 1 };
 #endif
 
-void cap_medium(unsigned int p0, unsigned int p1, unsigned int p2)
+static void cap_medium(unsigned int p0, unsigned int p1, unsigned int p2)
 {
     debug_log("%s(%u, %u)\n", __FUNCTION__, p0, p1);
     probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
@@ -192,23 +194,34 @@ void cap_medium(unsigned int p0, unsigned int p1, unsigned int p2)
     uint32_t cnt = comp_start(r680_gpios[p1], r680_pins[p1], 48000000 / 2);
     /* use counter value even if timeout reached */
     result.capacitance_pF = cnt * (1e12f / 48e6f / 691.0f / logf(63.0f / (63.0f - vref)));
-    debug_log("cnt=%u C=%fpF\n", cnt, result.capacitance_pF);
+    debug_log("cnt=%u C=%.1fnF\n", cnt, result.capacitance_pF / 1e3f);
+
+    /* probes are not reset in the original firmware, leading to wrong values or probe numbering */
+    probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+#ifndef __ARM_EABI__
+    tim6_usleep(1);
+#endif
 }
 
-void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
+static void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
 {
     static const unsigned int channels[3] = {1, 3, 7};
     debug_log("%s(%u, %u)\n", __FUNCTION__, p0, p1);
     probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+#ifndef __ARM_EABI__
     tim6_usleep(1); /* not in original firmware, required for simulation */
+#endif
     float u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
     if (u < 0.3f)
     {
         while (true)
         {
+#ifndef __ARM_EABI__
             tim6_usleep(1); /* not in original firmware, required for simulation */
+#endif
             u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
             if (0.3f < u)
             {
@@ -220,12 +233,16 @@ void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
 
     probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+#ifndef __ARM_EABI__
     tim6_usleep(1); /* not in original firmware, required for simulation */
+#endif
     adc_average(channels[p0], 100);
     adc_average(channels[p1], 100);
     while (true)
     {
+#ifndef __ARM_EABI__
         tim6_usleep(1); /* not in original firmware, required for simulation */
+#endif
         u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
         if (0.01f < u)
         {
@@ -259,7 +276,61 @@ void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
     u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     result.capacitance_pF = cnt * (1e12f / 48e6f / 680.0f / logf(5.0f / (5.0f - u)));
-    debug_log("cnt=%u U=%f C=%fpF\n", cnt, u, result.capacitance_pF);
+    debug_log("cnt=%u U=%f C=%.1fuF\n", cnt, u, result.capacitance_pF / 1e6f);
+}
+
+static void cap_esr(unsigned int p0, unsigned int p1, bool discharge)
+{
+    static const unsigned int channels[3] = {1, 3, 7};
+    debug_log("%s(%u, %u, %u)\n", __FUNCTION__, p0, p1, discharge);
+    if (discharge)
+    {
+        probe_discharge(p0, p1);
+    }
+    probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    tim6_msleep(100);
+    float r;
+    /* original firmware does this 10 times but throws away the first 9 results */
+    //for (int i = 0; i < 10; i++)
+    {
+        int_fast32_t u0_sum = 0;
+        int_fast32_t u1_sum = 0;
+        for (int j = 0; j < 500; j++)
+        {
+            iwdg_reload();
+            probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+            probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+            /* 78us until p1 goes hi-Z */
+#ifndef __ARM_EABI__
+            tim6_usleep(30);    /* adjust simulation timing to original firmware */
+#endif
+            u1_sum += adc_single(channels[p1]);
+#ifndef __ARM_EABI__
+            tim6_usleep(30);    /* adjust simulation timing to original firmware */
+#endif
+            u0_sum += adc_single(channels[p0]);
+            tim6_usleep(4
+#ifndef __ARM_EABI__
+                + 18   /* adjust simulation timing to original firmware */
+#endif
+            );
+            probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+#ifndef __ARM_EABI__
+            tim6_usleep(43);    /* adjust simulation timing to original firmware */
+#endif
+            adc_single(channels[p1]); /* result thrown away */
+            probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+            tim6_usleep(990
+#ifndef __ARM_EABI__
+                + 90            /* adjust simulation timing to original firmware */
+#endif
+            );
+        }
+        r = (u1_sum - u0_sum) * (30.0f / 1.05f * 0.125f) / u0_sum;
+    }
+    debug_log("ESR=%.3f\n", r);
+    result.resistance = r;
 }
 
 bool cap_bat(void)
@@ -284,7 +355,7 @@ bool cap_bat(void)
             cap_big(result.probes[0], result.probes[2], result.probes[1]);
             if (55e6f < result.capacitance_pF) /* >55uF? */
             {
-                // cap_esr(result.probes[0], result.probes[2], true);
+                cap_esr(result.probes[0], result.probes[2], true);
                 // cap_vloss(result.probes[0], result.probes[2]);
                 return true;
             }
@@ -302,7 +373,11 @@ bool cap_bat(void)
                 result.component = COMPONENT_CAP;
                 result.probes[0] = probes[i][0];
                 result.probes[2] = probes[i][1];
-                // cap_esr(result.probes[0], result.probes[2], true);
+                /*
+                    For values below 700nF, the ESR is overwritten by the subsequent resistor measurement.
+                    But the ESR value is not displayed below 700nF.
+                */
+                cap_esr(result.probes[0], result.probes[2], true);
                 // cap_vloss(result.probes[0], result.probes[2]);
                 return true;
             }

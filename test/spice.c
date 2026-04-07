@@ -25,11 +25,17 @@ static int spice_command(const char *fmt, ...)
     return e;
 }
 
+static bool str_startswith(const char *s, const char *start)
+{
+    return strncmp(s, start, strlen(start)) == 0;
+}
+
 static int send_char(char *s, int id, void *user)
 {
     // puts(s);
-    assert((strncmp(s, "stderr Warning:", strlen("stderr Warning:")) != 0)
-        || (strncmp(s, "stderr Warning: losing old state for circuit", strlen("stderr Warning: losing old state for circuit")) == 0) );
+    assert(!str_startswith(s, "stderr Warning:")
+         || str_startswith(s, "stderr Warning: losing old state for circuit") );
+    assert(!str_startswith(s, "stderr simulation aborted"));
 }
 
 static int send_stat(char *stat, int id, void *user)
@@ -51,6 +57,7 @@ static unsigned int comp_probe;
 static char comp_probe_s[3 + 1];
 static float comp_threshold;
 static double spice_time;
+static const double spice_time_max = 10.0;
 
 static int send_data(pvecvaluesall vec_vals, int num, int id, void *user)
 {
@@ -61,7 +68,7 @@ static int send_data(pvecvaluesall vec_vals, int num, int id, void *user)
         if (strcmp(v->name, "time") == 0)
         {
             spice_time = v->creal;
-            assert(spice_time < 7.9); /* .tran stop sufficient? */
+            assert(spice_time + 0.1 < spice_time_max); /* .tran stop sufficient? */
         }
         else if (strcmp(v->name, "/a0") == 0)
         {
@@ -281,7 +288,7 @@ void spice_dut_set(char **dut, double t_step)
         circ_a[i++] = strdup(dut[d]);
     }
 
-    asprintf(&circ_a[i++], ".tran %f 8", t_step);
+    asprintf(&circ_a[i++], ".tran %f %f", t_step, spice_time_max);
 
     circ_a[i++] = strdup(".end");
     circ_a[i++] = NULL;
@@ -295,14 +302,14 @@ void spice_dut_set(char **dut, double t_step)
         free(circ_a[i]);
     }
 
+    spice_command("destroy all");
     // spice_command("listing deck");
-
     spice_command("stop when time = 1u");
     spice_command("run");
     spice_command("delete %u", ++breakpoint_counter);
 }
 
-uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
+uint_fast16_t adc_single(uint_fast8_t channel)
 {
     int val = adc_val[channel] * (4095.0f / 5.0f);
     if (val < 0)
@@ -316,6 +323,11 @@ uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
     return val;
 }
 
+uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
+{
+    return adc_single(channel);
+}
+
 void comp_init(uint_fast8_t probe, uint_fast8_t vref_sel)
 {
     assert(probe < 3);
@@ -327,7 +339,6 @@ void comp_init(uint_fast8_t probe, uint_fast8_t vref_sel)
 uint_fast32_t comp_start(unsigned int unused, unsigned int pullup, uint_fast32_t timeout)
 {
     assert(pullup < 3);
-    printf("%s(%u, %lu)\n", __FUNCTION__, pullup, timeout);
 
     snprintf(comp_probe_s, sizeof(comp_probe_s), "/a%u", comp_probe);
 
@@ -336,16 +347,14 @@ uint_fast32_t comp_start(unsigned int unused, unsigned int pullup, uint_fast32_t
     spice_command("alter v%u%u = 0", comp_probe, pullup * 2 + 1);
 
     double start = spice_time;
-    printf("start=%f end=%f\n", start, spice_time + (timeout + 3) / 48e6);
 
     /* add a few ticks to ensure simulation doesn't stop a few ticks earlier than timeout */
-    spice_command("stop when time >= %f", spice_time + (timeout + 3) / 48e6);
+    spice_command("stop when time >= %f", spice_time + (timeout + 4) / 48e6);
     spice_command("stop when v(%s) > %f", comp_probe_s, comp_threshold);
     spice_command("resume");
     spice_command("delete %u", ++breakpoint_counter);
     spice_command("delete %u", ++breakpoint_counter);
 
-    printf("%s end=%f cnt=%lu\n", __FUNCTION__, spice_time, (uint_fast32_t)((spice_time - start) * 48e6));
     comp_probe_s[0] = '\0';
     return (spice_time - start) * 48e6;
 }
