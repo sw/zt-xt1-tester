@@ -2,6 +2,7 @@
     "clangd.arguments": [
         "--compile-commands-dir=${command:cmake.buildDirectory}"
     ],
+    "cmake.ctest.allowParallelJobs": true,
     "cmake.options.advanced": {
         "configurePreset": {
             "statusBarVisibility": "visible"
@@ -12,5 +13,7 @@
     "cortex-debug.objdumpPath.linux": "arm-none-eabi-objdump",
     "files.associations": {
         "*.h": "c"
-    }
+    },
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true
 }

@@ -32,7 +32,7 @@ int test_cap(int argc, char *argv[])
         for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
         {
             asprintf(&dut[0], "c1 /t%u /t%u %fp", probes[i][0], probes[i][1], c);
-            spice_dut_set(dut, SPICE_TSTEP_DEFAULT);//fmax(SPICE_TSTEP_DEFAULT, c / 1e12));
+            spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
             component_do_all();
             assert(result.component == COMPONENT_CAP);
             assert(fabsf(result.capacitance_pF - c) < c * 0.05f + 10.0f);
