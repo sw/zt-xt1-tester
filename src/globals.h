@@ -55,10 +55,7 @@ typedef struct
     float resistance;
     float capacitance_pF;
     float inductance;
-    union {
-        float vdiff;
-        float diode_vf;
-    };
+    float diode_vf;
     float hfe;
     union
     {

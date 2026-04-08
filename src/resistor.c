@@ -58,7 +58,7 @@ bool resistor(void)
                     result.probes[2] = probes[min_idx][1];
                     return true;
                 }
-            } else { debug_log("cap=%f, reject resistance\n", result.capacitance_pF); }
+            }
         }
     }
     return false;
@@ -67,8 +67,7 @@ bool resistor(void)
 void resistor_measure(int a, int b, int param)
 {
     static const unsigned int channels[3] = {1, 3, 7};
-    float r;
-    adc_sampletime = 14;
+    adc_sampletime = 14; /* ADC_SAMP_TIME_480CYCLES5 */
     if (param == 0)
     {
         /* very low resistance < 0.8ohm, connect directly */
@@ -125,5 +124,5 @@ void resistor_measure(int a, int b, int param)
         }
     }
 out:
-    adc_sampletime = 5;
+    adc_sampletime = 5; /* ADC_SAMP_TIME_42CYCLES5 */
 }
