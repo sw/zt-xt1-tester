@@ -8,14 +8,15 @@
 #include "globals.h"
 #include "spice.h"
 
-int test_emos_n(int argc, char *argv[])
+int test_darlington_npn(int argc, char *argv[])
 {
     calib_default();
     spice_init();
 
-    char *dut[3];
+    char *dut[4];
     int i = 0;
-    dut[i++] = ".include \"../../../test/spice/2N7002.txt\"";
+    dut[i++] = ".include \"../../../test/spice/2N3904.txt\"";
+    dut[i++] = "";
     dut[i++] = "";
     dut[i++] = NULL;
     assert(i <= sizeof(dut) / sizeof(dut[0]));
@@ -37,15 +38,15 @@ int test_emos_n(int argc, char *argv[])
 
     for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
     {
-        asprintf(&dut[1], "xq1 /t%u /t%u /t%u 2n7002", probes[i][1], probes[i][0], probes[i][2]);
+        /* for now join two 2N3904s. TODO: find workable model of a true darlington */
+        asprintf(&dut[1], "q1 /t%u /xx /t%u 2n3904", probes[i][1], probes[i][2]);
+        asprintf(&dut[2], "q2 /t%u /t%u /xx 2n3904", probes[i][1], probes[i][0]);
         spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
         component_do_all();
-        assert(result.component == COMPONENT_EMOS);
+        assert(result.component == COMPONENT_DARLINGTON);
         assert(result.subtype == 1);
-        assert(fabsf(result.resistance - 2.33f) < 0.01f);
-        assert(fabsf(result.emos_uth - 1.75f) < 0.01f);
-        assert(41.0f < result.capacitance_pF);
-        assert(result.capacitance_pF < 65.0f);
+        assert(fabsf(result.hfe - 71.2f) < 1.0f);
+        assert(fabsf(result.bjt_ube - 1.60f) < 0.01f);
         assert(result.probes[0] == probes[i][0]);
         assert(result.probes[1] == probes[i][1]);
         assert(result.probes[2] == probes[i][2]);

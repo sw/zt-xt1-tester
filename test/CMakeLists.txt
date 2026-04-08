@@ -2,6 +2,8 @@ set(TESTS
     test_bjt_npn.c
     test_bjt_pnp.c
     test_cap.c
+    test_darlington_npn.c
+    test_darlington_pnp.c
     test_diode.c
     test_emos_n.c
     test_emos_p.c
