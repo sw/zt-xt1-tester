@@ -343,8 +343,9 @@ void comp_init(uint_fast8_t probe, uint_fast8_t vref_sel)
     comp_threshold = vref_sel * (5.0f / 63.0f); /* TODO: 63 or 64? */
 }
 
-uint_fast32_t comp_start(unsigned int unused, unsigned int pullup, uint_fast32_t timeout)
+uint_fast32_t comp_start(unsigned int probe_pull, unsigned int pullup, uint_fast32_t timeout)
 {
+    assert(probe_pull < 3);
     assert(pullup < 3);
 
     snprintf(comp_probe_s, sizeof(comp_probe_s), "/a%u", comp_probe);
@@ -356,11 +357,11 @@ uint_fast32_t comp_start(unsigned int unused, unsigned int pullup, uint_fast32_t
         tr[probes[2].direct], tr[probes[2].r680], tr[probes[2].r470k]);
 
     /* simulate direct write to GPIO PBSC register to pull probe high */
-    if (pullup == 0) { probes[comp_probe].direct = PROBE_DRV_HI; }
-    if (pullup == 1) { probes[comp_probe].r680   = PROBE_DRV_HI; }
-    if (pullup == 2) { probes[comp_probe].r470k  = PROBE_DRV_HI; }
-    spice_command("alter v%u%u = 0", comp_probe, pullup * 2);
-    spice_command("alter v%u%u = 0", comp_probe, pullup * 2 + 1);
+    if (pullup == 0) { probes[probe_pull].direct = PROBE_DRV_HI; }
+    if (pullup == 1) { probes[probe_pull].r680   = PROBE_DRV_HI; }
+    if (pullup == 2) { probes[probe_pull].r470k  = PROBE_DRV_HI; }
+    spice_command("alter v%u%u = 0", probe_pull, pullup * 2);
+    spice_command("alter v%u%u = 0", probe_pull, pullup * 2 + 1);
 
     printf("                         %c %c %c    %c %c %c    %c %c %c\n",
         tr[probes[0].direct], tr[probes[0].r680], tr[probes[0].r470k],

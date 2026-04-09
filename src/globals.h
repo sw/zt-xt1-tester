@@ -54,7 +54,7 @@ typedef struct
     uint8_t unknown[6];
     float resistance;
     float capacitance_pF;
-    float inductance;
+    float inductance_uH;
     float diode_vf;
     float hfe;
     union

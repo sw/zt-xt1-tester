@@ -95,7 +95,7 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_
     static GPIO_Module *const r470k_gpios[3] = { GPIOA, GPIOA, GPIOB };
     static const uint16_t r470k_pins[3] = { GPIO_PIN_2, GPIO_PIN_5, GPIO_PIN_1 };
 #else
-    static const unsigned int r470k_gpios[3] = { 0 };
+    static const unsigned int r470k_gpios[3] = { 0, 1, 2 };
     static const unsigned int r470k_pins[3] = { 2, 2, 2 };
 #endif
     debug_log("%s(%u, %u)\n", __FUNCTION__, p0, p1);
@@ -179,7 +179,7 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_
 static GPIO_Module *const r680_gpios[3] = { GPIOA, GPIOA, GPIOA };
 static const uint16_t r680_pins[3] = { GPIO_PIN_0, GPIO_PIN_4, GPIO_PIN_6 };
 #else
-static const unsigned int r680_gpios[3] = { 0 };
+static const unsigned int r680_gpios[3] = { 0, 1, 2 };
 static const unsigned int r680_pins[3] = { 1, 1, 1 };
 #endif
 

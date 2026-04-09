@@ -7,6 +7,7 @@ set(TESTS
     test_diode.c
     test_emos_n.c
     test_emos_p.c
+    test_inductor.c
     test_resistor.c
 )
 

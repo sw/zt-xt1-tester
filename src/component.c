@@ -4,6 +4,7 @@
 #include "diode.h"
 #include "emos.h"
 #include "globals.h"
+#include "inductor.h"
 #include "resistor.h"
 #include "uart.h"
 
@@ -13,7 +14,6 @@ static bool dmos(void) { return false; }
 static bool thy_triac(void) { return false; }
 static bool igbt(void) { return false; }
 static bool ujt(void) { return false; }
-static bool inductor(void) { return false; }
 
 void component_do_all(void)
 {
