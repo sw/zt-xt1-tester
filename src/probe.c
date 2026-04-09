@@ -130,7 +130,9 @@ void probe_discharge(uint_fast8_t p0, uint_fast8_t p1)
     do
     {
         iwdg_reload();
-        tim6_usleep(1); /* not in original firmware, required for simulation */
+#ifndef __ARM_EABI__
+        tim6_usleep(10); /* not in original firmware, required for simulation */
+#endif
         u = adc_average(channels[p1], 100) * (5.0f / 4095.0f);
     }
     while (0.01f < u);

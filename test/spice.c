@@ -100,6 +100,7 @@ static int bg_thread_running(NG_BOOL running, int id, void *user)
 
 void spice_init(void)
 {
+    assert(strncmp(NGSPICE_PACKAGE_VERSION, "42", 2) >= 0);
     ngSpice_Init(send_char, send_stat, controlled_exit, send_data, send_init_data, bg_thread_running, NULL);
 }
 
@@ -170,6 +171,12 @@ void probe_configure(uint_fast8_t probe, probe_mode_t direct, probe_mode_t r680,
 static unsigned int breakpoint_counter;
 void tim6_usleep(uint_fast32_t us)
 {
+    static const char tr[] = { [PROBE_ANALOG] = '~', [PROBE_DRV_LO] = 'v', [PROBE_DRV_HI] = '^' };
+    printf("%s(%7lu)     %c %c %c    %c %c %c    %c %c %c\n", __FUNCTION__, us,
+        tr[probes[0].direct], tr[probes[0].r680], tr[probes[0].r470k],
+        tr[probes[1].direct], tr[probes[1].r680], tr[probes[1].r470k],
+        tr[probes[2].direct], tr[probes[2].r680], tr[probes[2].r470k]);
+
     /*
         Warning: stupidity
         We have to use breakpoints with condition "time >= x" to allow for arbitrary resolution.
@@ -342,14 +349,28 @@ uint_fast32_t comp_start(unsigned int unused, unsigned int pullup, uint_fast32_t
 
     snprintf(comp_probe_s, sizeof(comp_probe_s), "/a%u", comp_probe);
 
+    static const char tr[] = { [PROBE_ANALOG] = '~', [PROBE_DRV_LO] = 'v', [PROBE_DRV_HI] = '^' };
+    printf("%s(%u, %8lu)  %c %c %c    %c %c %c    %c %c %c\n", __FUNCTION__, pullup, timeout,
+        tr[probes[0].direct], tr[probes[0].r680], tr[probes[0].r470k],
+        tr[probes[1].direct], tr[probes[1].r680], tr[probes[1].r470k],
+        tr[probes[2].direct], tr[probes[2].r680], tr[probes[2].r470k]);
+
     /* simulate direct write to GPIO PBSC register to pull probe high */
+    if (pullup == 0) { probes[comp_probe].direct = PROBE_DRV_HI; }
+    if (pullup == 1) { probes[comp_probe].r680   = PROBE_DRV_HI; }
+    if (pullup == 2) { probes[comp_probe].r470k  = PROBE_DRV_HI; }
     spice_command("alter v%u%u = 0", comp_probe, pullup * 2);
     spice_command("alter v%u%u = 0", comp_probe, pullup * 2 + 1);
+
+    printf("                         %c %c %c    %c %c %c    %c %c %c\n",
+        tr[probes[0].direct], tr[probes[0].r680], tr[probes[0].r470k],
+        tr[probes[1].direct], tr[probes[1].r680], tr[probes[1].r470k],
+        tr[probes[2].direct], tr[probes[2].r680], tr[probes[2].r470k]);
 
     double start = spice_time;
 
     /* add a few ticks to ensure simulation doesn't stop a few ticks earlier than timeout */
-    spice_command("stop when time >= %f", spice_time + (timeout + 4) / 48e6);
+    spice_command("stop when time >= %f", spice_time + (timeout + 100) / 48e6);
     spice_command("stop when v(%s) > %f", comp_probe_s, comp_threshold);
     spice_command("resume");
     spice_command("delete %u", ++breakpoint_counter);

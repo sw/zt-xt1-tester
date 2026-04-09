@@ -132,25 +132,28 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_
         probe_cap = calibration.probe23_cap;
     }
 
-    /* p2 is not initialised in the original firmware, leading to wrong values or probe numbering */
-    probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-
+    /*
+        p2 is not initialised in the original firmware, leading to wrong values or probe numbering.
+        We actually need to pull it low first, to discharge the capacitor in case it's connected here.
+    */
+    probe_configure(p2, PROBE_ANALOG, PROBE_DRV_LO, PROBE_DRV_LO);
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_DRV_LO);
     tim6_msleep(2);
     const uint_fast8_t vref = 51;
     comp_init(p1, vref);
+
+    /* not in original firmware: reset p2 after discharging */
+    probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+
     /* maximum value of 90nF would need ~3.4 megaticks */
     static const uint_fast32_t timeout = 48000000 / 10;
     uint32_t cnt = comp_start(r470k_gpios[p1], r470k_pins[p1], timeout);
 
-    /* probes are not reset in the original firmware, leading to wrong values or probe numbering */
+    /* probes are not reset in the original firmware */
     probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-#ifndef __ARM_EABI__
-    tim6_usleep(1);
-#endif
 
     if (cnt >= timeout)
     {
@@ -197,12 +200,9 @@ static void cap_medium(unsigned int p0, unsigned int p1, unsigned int p2)
     result.capacitance_pF = cnt * (1e12f / 48e6f / 691.0f / logf(63.0f / (63.0f - vref)));
     debug_log("cnt=%u C=%.1fnF\n", cnt, result.capacitance_pF / 1e3f);
 
-    /* probes are not reset in the original firmware, leading to wrong values or probe numbering */
+    /* probes are not reset in the original firmware */
     probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-#ifndef __ARM_EABI__
-    tim6_usleep(1);
-#endif
 }
 
 static void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
@@ -213,7 +213,7 @@ static void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
 #ifndef __ARM_EABI__
-    tim6_usleep(1); /* not in original firmware, required for simulation */
+    tim6_usleep(10); /* not in original firmware, required for simulation */
 #endif
     float u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
     if (u < 0.3f)
@@ -221,7 +221,7 @@ static void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
         while (true)
         {
 #ifndef __ARM_EABI__
-            tim6_usleep(1); /* not in original firmware, required for simulation */
+            tim6_usleep(10); /* not in original firmware, required for simulation */
 #endif
             u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
             if (0.3f < u)
@@ -235,14 +235,14 @@ static void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
     probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
 #ifndef __ARM_EABI__
-    tim6_usleep(1); /* not in original firmware, required for simulation */
+    tim6_usleep(10); /* not in original firmware, required for simulation */
 #endif
     adc_average(channels[p0], 100);
     adc_average(channels[p1], 100);
     while (true)
     {
 #ifndef __ARM_EABI__
-        tim6_usleep(1); /* not in original firmware, required for simulation */
+        tim6_usleep(10); /* not in original firmware, required for simulation */
 #endif
         u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
         if (0.01f < u)
@@ -369,7 +369,7 @@ static void cap_vloss(unsigned int p0, unsigned int p1)
         while (u_before < u_charge)
         {
 #ifndef __ARM_EABI__
-            tim6_usleep(1);
+            tim6_usleep(10); /* not in original firmware, required for simulation */
 #endif
             /* here, 2^12 is actually used instead of 2^12-1. go figure... */
             u_before = adc_average(channels[p1], 1) * (5.0f / 4096.0f);
