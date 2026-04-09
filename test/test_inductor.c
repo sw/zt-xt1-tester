@@ -22,8 +22,13 @@ int test_inductor(int argc, char *argv[])
 
     /* sanity check: no device connected */
     spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+    memset(&result, 0xCD, sizeof(result));
     component_do_all();
     assert((result.component == COMPONENT_NONE) || ((result.component == COMPONENT_CAP) && (result.capacitance_pF < 10.0f)));
+    memset(&result, 0xCD, sizeof(result));
+    tool = TOOL_INDUCTOR;
+    tool_do();
+    assert(result.component == COMPONENT_NONE);
 
     static const unsigned int probes[3][2] = { {0, 1}, {0, 2}, {1, 2} };
 
@@ -38,8 +43,17 @@ int test_inductor(int argc, char *argv[])
             free(dut[0]);
             free(dut[1]);
 
+            memset(&result, 0xCD, sizeof(result));
             component_do_all();
+            assert(result.component == COMPONENT_INDUCTOR);
+            assert(fabsf(result.inductance_uH - l) < l * 0.02f);
+            assert(fabsf(result.resistance - 2) < 2 * 0.05f);
+            assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
+                   || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
 
+            memset(&result, 0xCD, sizeof(result));
+            tool = TOOL_INDUCTOR;
+            tool_do();
             assert(result.component == COMPONENT_INDUCTOR);
             assert(fabsf(result.inductance_uH - l) < l * 0.02f);
             assert(fabsf(result.resistance - 2) < 2 * 0.05f);

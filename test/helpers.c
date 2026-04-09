@@ -1,3 +1,7 @@
+#include <stddef.h>
+#include <stdint.h>
+
+void uart_send(uint_fast8_t id, size_t length) { }
 void uart_send_result(void) { }
 
 float divf(float x, float y)

@@ -126,3 +126,32 @@ void resistor_measure(int a, int b, int param)
 out:
     adc_sampletime = 5; /* ADC_SAMP_TIME_42CYCLES5 */
 }
+
+bool resistor_tool(void)
+{
+    static const unsigned int probes[3][2] = { {0, 1}, {0, 2}, {1, 2} };
+
+    float r_min = 1e9f;
+    result.component = COMPONENT_NONE;
+    for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
+    {
+        probe_configure(0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+        probe_configure(1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+        probe_configure(2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+        resistor_range_try(probes[i][0], probes[i][1]);
+        if (!(r_min < result.resistance))
+        {
+            r_min = result.resistance;
+            result.probes[0] = probes[i][0];
+            result.probes[2] = probes[i][1];
+        }
+    }
+    float r = r_min * 1.3e8f / (1.3e8f - r_min);
+    if (r < 30e6f)
+    {
+        result.resistance = r;
+        result.component = COMPONENT_RESISTOR;
+        return true;
+    }
+    return false;
+}

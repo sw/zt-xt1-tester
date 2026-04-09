@@ -1,15 +1,19 @@
+#include <string.h>
 #include "globals.h"
+#include "inductor.h"
+#include "resistor.h"
+#include "uart.h"
 #include "tool.h"
 
 void tool_do(void)
 {
     if (tool == TOOL_RESISTOR)
     {
-        //test_resistor_tool();
+        resistor_tool();
     }
     else if (tool == TOOL_INDUCTOR)
     {
-        //test_inductor_tool();
+        inductor_tool();
     }
     else if (tool == TOOL_TEMP_DS18B20)
     {
@@ -36,5 +40,10 @@ void tool_do(void)
     else if (tool == TOOL_CALIBRATE)
     {
 
+        uart_send(8, 1);
+        return;
     }
+
+    memcpy(uart_frame_tx.payload, &result, sizeof(result));
+    uart_send(4, sizeof(result));
 }
