@@ -1,0 +1,1 @@
+.model DN2530 VDMOS (Rg=1 Vto=-1.5 Kp=0.82 Lambda=8m Rs=0.3 Ksubthres=0.11 Mtriode=0.8 Rd=5 Bex=-1.9 Vtotc=-0.8m Tksubthres1=4m Trs1=3m Trd1=3m Cgdmax=170p Cgdmin=15p a=0.7 Cgs=100p Cjo=130p m=0.75 VJ=0.75 IS=1n N=1.6 Eg=1.2 Rb=5 Vds=300 Ron=12 mfg=IHKT1907)

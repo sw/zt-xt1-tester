@@ -1,0 +1,61 @@
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "calib.h"
+#include "component.h"
+#include "globals.h"
+#include "spice.h"
+
+int test_dmos(int argc, char *argv[])
+{
+    calib_default();
+    spice_init();
+
+    char *dut[3];
+    int i = 0;
+    dut[i++] = ".include \"../../../test/spice/DN2530.txt\"";
+    dut[i++] = "";
+    dut[i++] = NULL;
+    assert(i <= sizeof(dut) / sizeof(dut[0]));
+
+    /* sanity check: no device connected */
+    spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+    memset(&result, 0xCD, sizeof(result));
+    component_do_all();
+    assert((result.component == COMPONENT_NONE) || ((result.component == COMPONENT_CAP) && (result.capacitance_pF < 10.0f)));
+
+    static const unsigned int probes[6][3] =
+    {
+        {0, 1, 2},
+        {0, 2, 1},
+        {1, 0, 2},
+        {1, 2, 0},
+        {2, 0, 1},
+        {2, 1, 0},
+    };
+
+    for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
+    {
+        asprintf(&dut[1], "mq1 /t%u /t%u /t%u DN2530", probes[i][1], probes[i][0], probes[i][2]);
+        spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+        free(dut[1]);
+
+        memset(&result, 0xCD, sizeof(result));
+        component_do_all();
+        assert(result.component == COMPONENT_DMOS);
+        assert(result.subtype == 1);
+        assert(fabsf(result.resistance - 5.65f) < 0.01f);
+        assert(fabsf(result.emos_uth - 1.51f) < 0.01f);
+        /* TODO: check gate capacitance, seems rather high */
+        assert(252.0f < result.capacitance_pF);
+        assert(result.capacitance_pF < 266.0f);
+        assert(result.probes[0] == probes[i][0]);
+        assert(result.probes[1] == probes[i][1]);
+        assert(result.probes[2] == probes[i][2]);
+    }
+
+    spice_uninit();
+    return 0;
+}

@@ -5,6 +5,7 @@ set(TESTS
     test_darlington_npn.c
     test_darlington_pnp.c
     test_diode.c
+    test_dmos.c
     test_emos_n.c
     test_emos_p.c
     test_inductor.c

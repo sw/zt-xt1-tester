@@ -7,6 +7,7 @@ typedef enum : uint8_t
 {
     COMPONENT_NONE       =  0,
     COMPONENT_JFET       =  2,
+    COMPONENT_DMOS       =  3,
     COMPONENT_BJT        =  4,
     COMPONENT_DARLINGTON =  5,
     COMPONENT_EMOS       =  7,
@@ -30,6 +31,8 @@ bool darlington(void);
 
 bool diode(void);
 void diode_forward_reverse(unsigned int pa, unsigned int pk);
+
+bool dmos(void);
 
 bool emos(void);
 
