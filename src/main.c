@@ -33,7 +33,7 @@ static void tim3_init(void)
 {
     TIM_TimeBaseInitType TIM_TimeBaseInitStruct;
     NVIC_InitType NVIC_InitStruct;
-    
+
     TIM_TimeBaseInitStruct.Prescaler = 0;
     TIM_TimeBaseInitStruct.CntMode = TIM_CNT_MODE_UP;
     TIM_TimeBaseInitStruct.Period = 0xffff;
@@ -57,7 +57,6 @@ static void iwdg_setup(void)
     IWDG_CntReload(2500);
     IWDG_ReloadKey();
     IWDG_Enable();
-    /* TODO: write disable? */
 }
 
 /* wait for command received via UART, meanwhile decode infrared */
@@ -77,7 +76,7 @@ static void cmd_wait_ir(void)
     if (uart_frame_rx.id == 1)
     {
         uart_send(1, 0);
-        test_type = uart_frame_rx.test_type;
+        zener_enabled = uart_frame_rx.test_type;
         component_do_all();
     }
     else if (uart_frame_rx.id == 3)
@@ -105,6 +104,7 @@ static void cmd_wait_ir(void)
         }
     }
 
+    uart_rx_pending = false;
     /* re-arm DMA transfer. TODO: move to uart.c */
     DMA_SetCurrDataCounter(DMA_CH5, sizeof(uart_frame_rx_t));
     DMA_EnableChannel(DMA_CH5, ENABLE);

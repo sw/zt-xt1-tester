@@ -92,7 +92,7 @@ extern volatile uint32_t uart_rx_len;
 extern volatile bool uart_rx_pending;
 
 extern tool_t tool;
-extern uint8_t test_type;
+extern uint8_t zener_enabled;
 
 extern result_t result;
 

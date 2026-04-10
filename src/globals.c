@@ -10,7 +10,7 @@ volatile uint32_t uart_rx_len;
 volatile bool uart_rx_pending;
 
 tool_t tool;
-uint8_t test_type;
+uint8_t zener_enabled;
 
 result_t result;
 

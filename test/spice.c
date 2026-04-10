@@ -33,6 +33,7 @@ static bool str_startswith(const char *s, const char *start)
 static int send_char(char *s, int id, void *user)
 {
     // puts(s);
+    assert(!str_startswith(s, "stderr Error:"));
     assert(!str_startswith(s, "stderr Warning:")
          || str_startswith(s, "stderr Warning: losing old state for circuit") );
     assert(!str_startswith(s, "stderr simulation aborted"));
@@ -56,6 +57,7 @@ static float adc_val[8];
 static unsigned int comp_probe;
 static char comp_probe_s[3 + 1];
 static float comp_threshold;
+static bool opamp_enabled;
 static double spice_time;
 static const double spice_time_max = 10.0;
 
@@ -84,6 +86,11 @@ static int send_data(pvecvaluesall vec_vals, int num, int id, void *user)
         {
             //printf("a2 %.3fV\n", v->creal);
             adc_val[7] = v->creal;
+        }
+        else if (strcmp(v->name, "/az") == 0)
+        {
+            //printf("az %.3fV\n", v->creal);
+            adc_val[6] = opamp_enabled ? v->creal : 0;
         }
     }
 }
@@ -196,7 +203,7 @@ void tim6_msleep(uint_fast32_t ms)
 
 void spice_dut_set(char **dut, double t_step)
 {
-    char *circ_a[64];
+    char *circ_a[65];
     int i = 0;
 
     /* create netlist. all strings allocated on the heap and free'd after parsing */
@@ -289,6 +296,15 @@ void spice_dut_set(char **dut, double t_step)
     circ_a[i++] = strdup("mq24 /w2 /g24  0  nmos");
     circ_a[i++] = strdup("mq25 /w2 /g25 +5v pmos");
 
+    /* zener */
+    /* TODO: resistor values (and capacitor?) */
+    circ_a[i++] = strdup("v30 /vz 0 dc 35.4");
+    circ_a[i++] = strdup("i30 /vz /tz dc 3m");
+    circ_a[i++] = strdup(".model ideal_diode d(n=0.001)");
+    circ_a[i++] = strdup("d30 /tz /vz ideal_diode");
+    circ_a[i++] = strdup("r30 /tz /az 68k");
+    circ_a[i++] = strdup("r31 /az 0 10k");
+
     /* DUT */
     for (int d = 0; dut[d]; d++)
     {
@@ -379,4 +395,9 @@ uint_fast32_t comp_start(unsigned int probe_pull, unsigned int pullup, uint_fast
 
     comp_probe_s[0] = '\0';
     return (spice_time - start) * 48e6;
+}
+
+void opamp_enable(bool enable)
+{
+    opamp_enabled = enable;
 }

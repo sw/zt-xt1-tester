@@ -11,6 +11,7 @@ set(TESTS
     test_jfet_n.c
     test_jfet_p.c
     test_resistor.c
+    test_zener.c
 )
 
 create_test_sourcelist(SOURCES_TEST test_driver.c ${TESTS})
