@@ -5,9 +5,7 @@
 #endif
 #include "comp.h"
 #include "globals.h"
-#include "inductor.h"
 #include "probe.h"
-#include "resistor.h"
 #include "timer.h"
 
 float inductor_comp(unsigned int p0, unsigned int p1)

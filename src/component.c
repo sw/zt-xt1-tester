@@ -1,12 +1,4 @@
-#include "bjt.h"
-#include "darlington.h"
-#include "cap.h"
-#include "diode.h"
-#include "emos.h"
 #include "globals.h"
-#include "inductor.h"
-#include "jfet.h"
-#include "resistor.h"
 #include "uart.h"
 
 static bool zener(void) { return false; }

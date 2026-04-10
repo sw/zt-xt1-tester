@@ -1,5 +1,4 @@
 #include "adc.h"
-#include "darlington.h"
 #include "globals.h"
 #include "helpers.h"
 #include "probe.h"

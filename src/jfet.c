@@ -2,7 +2,6 @@
 #include "component.h"
 #include "debug.h"
 #include "globals.h"
-#include "jfet.h"
 #include "probe.h"
 #include "timer.h"
 

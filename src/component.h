@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef enum : uint8_t
@@ -18,3 +19,24 @@ typedef enum : uint8_t
 } component_t;
 
 void component_do_all(void);
+
+bool bjt(void);
+
+bool cap_bat(void);
+bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_probe);
+
+bool darlington(void);
+
+bool diode(void);
+void diode_forward_reverse(unsigned int pa, unsigned int pk);
+
+bool emos(void);
+
+bool inductor(void);
+bool inductor_tool(void);
+
+bool jfet(void);
+
+bool resistor(void);
+void resistor_measure(int a, int b, int param);
+bool resistor_tool(void);

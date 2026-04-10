@@ -1,7 +1,5 @@
 #include <string.h>
 #include "globals.h"
-#include "inductor.h"
-#include "resistor.h"
 #include "uart.h"
 #include "tool.h"
 

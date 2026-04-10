@@ -1,9 +1,6 @@
 #include <stdlib.h>
 #include "adc.h"
-#include "cap.h"
 #include "debug.h"
-#include "diode.h"
-#include "emos.h"
 #include "globals.h"
 #include "helpers.h"
 #include "probe.h"

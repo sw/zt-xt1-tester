@@ -4,7 +4,6 @@
 #include "globals.h"
 #include "helpers.h"
 #include "probe.h"
-#include "resistor.h"
 #include "timer.h"
 
 static void resistor_range_try(unsigned int p0, unsigned int p1)

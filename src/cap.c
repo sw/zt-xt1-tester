@@ -4,7 +4,6 @@
 #include "n32g031_tim.h"
 #endif
 #include "adc.h"
-#include "cap.h"
 #include "comp.h"
 #include "debug.h"
 #include "globals.h"

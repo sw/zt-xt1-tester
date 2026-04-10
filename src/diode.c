@@ -1,10 +1,7 @@
 #include <math.h>
 #include "adc.h"
-#include "cap.h"
-#include "diode.h"
 #include "globals.h"
 #include "probe.h"
-#include "resistor.h"
 #include "timer.h"
 
 bool diode(void)
