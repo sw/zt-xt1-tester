@@ -61,6 +61,7 @@ typedef struct
     {
         float bjt_ube;
         float emos_uth;
+        float jfet_ug;
     };
     union {
         float ic_mA;

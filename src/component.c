@@ -5,11 +5,11 @@
 #include "emos.h"
 #include "globals.h"
 #include "inductor.h"
+#include "jfet.h"
 #include "resistor.h"
 #include "uart.h"
 
 static bool zener(void) { return false; }
-static bool jfet(void) { return false; }
 static bool dmos(void) { return false; }
 static bool thy_triac(void) { return false; }
 static bool igbt(void) { return false; }

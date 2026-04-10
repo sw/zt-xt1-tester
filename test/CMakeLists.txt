@@ -8,6 +8,8 @@ set(TESTS
     test_emos_n.c
     test_emos_p.c
     test_inductor.c
+    test_jfet_n.c
+    test_jfet_p.c
     test_resistor.c
 )
 

@@ -15,7 +15,7 @@ static bool darlington_npn(unsigned int pb, unsigned int pc, unsigned int pe)
     probe_configure(pc, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(pe, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
 #ifndef __ARM_EABI__
-    tim6_usleep(50); /* not in original firmware, required for simulation */
+    tim6_usleep(100); /* not in original firmware, required for simulation */
 #endif
     float ub = adc_average(channels[pb], 100) * (5.0f / 4095.0f);
     float uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
@@ -49,7 +49,7 @@ static bool darlington_npn(unsigned int pb, unsigned int pc, unsigned int pe)
     probe_configure(pc, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(pe, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
 #ifndef __ARM_EABI__
-    tim6_usleep(50); /* not in original firmware, required for simulation */
+    tim6_usleep(100); /* not in original firmware, required for simulation */
 #endif
     adc_average(channels[pb], 100);
     uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
@@ -59,7 +59,7 @@ static bool darlington_npn(unsigned int pb, unsigned int pc, unsigned int pe)
     debug_log("Ic = (5V - %.3fV) / (680ohm + %.0fohm) = %.1fuA\n", uc, calibration.rp, result.ic_mA * 1e3f);
     if (result.ic_mA > 0.1f)
     {
-        debug_log("bad Ic");
+        debug_log("bad Ic\n");
         return false;
     }
     result.subtype = 1;
@@ -76,7 +76,7 @@ static bool darlington_pnp(unsigned int pb, unsigned int pc, unsigned int pe)
     probe_configure(pc, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(pe, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
 #ifndef __ARM_EABI__
-    tim6_usleep(50); /* not in original firmware, required for simulation */
+    tim6_usleep(100); /* not in original firmware, required for simulation */
 #endif
     float ub = adc_average(channels[pb], 100) * (5.0f / 4095.0f);
     float uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
@@ -110,7 +110,7 @@ static bool darlington_pnp(unsigned int pb, unsigned int pc, unsigned int pe)
     probe_configure(pc, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     probe_configure(pe, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
 #ifndef __ARM_EABI__
-    tim6_usleep(50); /* not in original firmware, required for simulation */
+    tim6_usleep(100); /* not in original firmware, required for simulation */
 #endif
     adc_average(channels[pb], 100);
     uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
@@ -119,7 +119,7 @@ static bool darlington_pnp(unsigned int pb, unsigned int pc, unsigned int pe)
     debug_log("Ic = %.3fV / (680ohm + %.0fohm) = %.1fuA\n", uc, calibration.rd, result.ic_mA * 1e3f);
     if (result.ic_mA > 0.1f)
     {
-        debug_log("bad Ic");
+        debug_log("bad Ic\n");
         return false;
     }
     result.subtype = 2;
