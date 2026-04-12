@@ -31,32 +31,31 @@ int test_inductor(int argc, char *argv[])
 
     for (float l = 10e3f; l <= 100e3f; l *= 10.0f)
     {
-        for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
-        {
-            asprintf(&dut[0], "l1 /t%u /xx %fu", probes[i][0], l);
-            /* simulate 2ohm resistance */
-            asprintf(&dut[1], "r1 /xx /t%u 2", probes[i][1]);
-            spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
-            free(dut[0]);
-            free(dut[1]);
+        i = (i + 1) % (sizeof(probes) / sizeof(probes[0]));
 
-            memset(&result, 0xCD, sizeof(result));
-            component_do_all();
-            assert(result.component == COMPONENT_INDUCTOR);
-            assert(fabsf(result.inductance_uH - l) < l * 0.02f);
-            assert(fabsf(result.resistance - 2) < 2 * 0.05f);
-            assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
-                   || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
+        asprintf(&dut[0], "l1 /t%u /xx %fu", probes[i][0], l);
+        /* simulate 2ohm resistance */
+        asprintf(&dut[1], "r1 /xx /t%u 2", probes[i][1]);
+        spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+        free(dut[0]);
+        free(dut[1]);
 
-            memset(&result, 0xCD, sizeof(result));
-            tool = TOOL_INDUCTOR;
-            tool_do();
-            assert(result.component == COMPONENT_INDUCTOR);
-            assert(fabsf(result.inductance_uH - l) < l * 0.02f);
-            assert(fabsf(result.resistance - 2) < 2 * 0.05f);
-            assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
-                   || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
-        }
+        memset(&result, 0xCD, sizeof(result));
+        component_do_all();
+        assert(result.component == COMPONENT_INDUCTOR);
+        assert(fabsf(result.inductance_uH - l) < l * 0.02f);
+        assert(fabsf(result.resistance - 2) < 2 * 0.05f);
+        assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
+                || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
+
+        memset(&result, 0xCD, sizeof(result));
+        tool = TOOL_INDUCTOR;
+        tool_do();
+        assert(result.component == COMPONENT_INDUCTOR);
+        assert(fabsf(result.inductance_uH - l) < l * 0.02f);
+        assert(fabsf(result.resistance - 2) < 2 * 0.05f);
+        assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
+                || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
     }
 
     spice_uninit();

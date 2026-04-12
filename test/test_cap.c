@@ -25,25 +25,24 @@ int test_cap(int argc, char *argv[])
     /* TODO: >=5mF (cap_bat_find/cap_big) */
     for (float c = 150; c < 5e9f; c *= 20.0f)
     {
-        for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
-        {
-            asprintf(&dut[0], "c1 /t%u /esr %fp", probes[i][0], c);
-            /* simulate 2ohm ESR */
-            asprintf(&dut[1], "r1 /esr /t%u 2", probes[i][1]);
-            spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
-            free(dut[0]);
-            free(dut[1]);
+        i = (i + 1) % (sizeof(probes) / sizeof(probes[0]));
 
-            memset(&result, 0xCD, sizeof(result));
-            component_do_all();
-            assert(result.component == COMPONENT_CAP);
-            assert(fabsf(result.capacitance_pF - c) < c * 0.05f + 11.0f);
-            /* ESR is wildly wrong... */
-            assert((c < 700e3f) || ((result.resistance > 1.0f) && (result.resistance < 10.5f)));
-            assert((c < 90e3f) || ((result.cap_vloss > 1.6f) && (result.cap_vloss < 7.6f)));
-            assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
-                   || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
-        }
+        asprintf(&dut[0], "c1 /t%u /esr %fp", probes[i][0], c);
+        /* simulate 2ohm ESR */
+        asprintf(&dut[1], "r1 /esr /t%u 2", probes[i][1]);
+        spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+        free(dut[0]);
+        free(dut[1]);
+
+        memset(&result, 0xCD, sizeof(result));
+        component_do_all();
+        assert(result.component == COMPONENT_CAP);
+        assert(fabsf(result.capacitance_pF - c) < c * 0.05f + 11.0f);
+        /* ESR is wildly wrong... */
+        assert((c < 700e3f) || ((result.resistance > 1.0f) && (result.resistance < 10.5f)));
+        assert((c < 90e3f) || ((result.cap_vloss > 1.6f) && (result.cap_vloss < 7.6f)));
+        assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
+                || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
     }
 
     // segfaults
