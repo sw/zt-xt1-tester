@@ -1,6 +1,7 @@
 {
     "clangd.arguments": [
-        "--compile-commands-dir=${command:cmake.buildDirectory}"
+        "--compile-commands-dir=${command:cmake.buildDirectory}",
+        "--query-driver=/usr/bin/arm-none-eabi-gcc,/usr/bin/cc"
     ],
     "cmake.ctest.allowParallelJobs": true,
     "cmake.options.advanced": {
@@ -14,6 +15,7 @@
     "files.associations": {
         "*.h": "c"
     },
+    "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": true
 }

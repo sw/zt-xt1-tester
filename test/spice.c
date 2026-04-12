@@ -34,8 +34,7 @@ static int send_char(char *s, int id, void *user)
 {
     // puts(s);
     assert(!str_startswith(s, "stderr Error:"));
-    assert(!str_startswith(s, "stderr Warning:")
-         || str_startswith(s, "stderr Warning: losing old state for circuit") );
+    assert(!str_startswith(s, "stderr Warning:"));
     assert(!str_startswith(s, "stderr simulation aborted"));
 }
 
@@ -109,6 +108,8 @@ void spice_init(void)
 {
     assert(strncmp(NGSPICE_PACKAGE_VERSION, "42", 2) >= 0);
     ngSpice_Init(send_char, send_stat, controlled_exit, send_data, send_init_data, bg_thread_running, NULL);
+    spice_command("set ngbehavior=ltpsa");
+    spice_command("circbyline .end");
 }
 
 void spice_uninit(void)
@@ -316,6 +317,9 @@ void spice_dut_set(char **dut, double t_step)
     circ_a[i++] = strdup(".end");
     circ_a[i++] = NULL;
 
+    spice_command("destroy all");
+    spice_command("remcirc");
+
     assert(i <= sizeof(circ_a) / sizeof(circ_a[0]));
     int e = ngSpice_Circ(circ_a);
     assert(e == 0);
@@ -325,7 +329,6 @@ void spice_dut_set(char **dut, double t_step)
         free(circ_a[i]);
     }
 
-    spice_command("destroy all");
     // spice_command("listing deck");
     spice_command("stop when time = 1u");
     spice_command("run");

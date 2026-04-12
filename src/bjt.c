@@ -1,5 +1,4 @@
 #include <stdbool.h>
-#include <stdio.h>
 #include "adc.h"
 #include "debug.h"
 #include "globals.h"

@@ -32,8 +32,14 @@ void calib_default(void)
 void calib_write(void)
 {
 #ifdef __ARM_EABI__
+    return; /* disabled for now */
     FLASH_Unlock();
     FLASH_EraseOnePage(FLASH_ADDR);
+    for (int i = 0; i < sizeof(calibration); i += 4)
+    {
+        FLASH_ProgramWord(0x0800fe00 + i, *(uint32_t *)((uint8_t *)&calibration + i));
+    }
+    FLASH_Lock();
 #else
     assert(false);
 #endif
