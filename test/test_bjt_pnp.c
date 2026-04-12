@@ -20,11 +20,6 @@ int test_bjt_pnp(int argc, char *argv[])
     dut[i++] = NULL;
     assert(i <= sizeof(dut) / sizeof(dut[0]));
 
-    /* sanity check: no device connected */
-    spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
-    component_do_all();
-    assert((result.component == COMPONENT_NONE) || ((result.component == COMPONENT_CAP) && (result.capacitance_pF < 10.0f)));
-
     static const unsigned int probes[6][3] =
     {
         {0, 1, 2},
@@ -39,6 +34,9 @@ int test_bjt_pnp(int argc, char *argv[])
     {
         asprintf(&dut[1], "q1 /t%u /t%u /t%u 2n3906", probes[i][1], probes[i][0], probes[i][2]);
         spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+        free(dut[1]);
+
+        memset(&result, 0xCD, sizeof(result));
         component_do_all();
         assert(result.component == COMPONENT_BJT);
         assert(result.subtype == 2);
@@ -47,7 +45,6 @@ int test_bjt_pnp(int argc, char *argv[])
         assert(result.probes[0] == probes[i][0]);
         assert(result.probes[1] == probes[i][1]);
         assert(result.probes[2] == probes[i][2]);
-        free(dut[1]);
     }
 
     spice_uninit();

@@ -23,9 +23,6 @@ int test_inductor(int argc, char *argv[])
     /* sanity check: no device connected */
     spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
     memset(&result, 0xCD, sizeof(result));
-    component_do_all();
-    assert((result.component == COMPONENT_NONE) || ((result.component == COMPONENT_CAP) && (result.capacitance_pF < 10.0f)));
-    memset(&result, 0xCD, sizeof(result));
     tool = TOOL_INDUCTOR;
     tool_do();
     assert(result.component == COMPONENT_NONE);

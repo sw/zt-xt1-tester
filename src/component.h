@@ -10,6 +10,7 @@ typedef enum : uint8_t
     COMPONENT_DMOS       =  3,
     COMPONENT_BJT        =  4,
     COMPONENT_DARLINGTON =  5,
+    COMPONENT_UJT        =  6,
     COMPONENT_EMOS       =  7,
     COMPONENT_IGBT       =  8,
     COMPONENT_DIODE      = 11,
@@ -47,5 +48,7 @@ bool jfet(void);
 bool resistor(void);
 void resistor_measure(int a, int b, int param);
 bool resistor_tool(void);
+
+bool ujt(void);
 
 bool zener(void);

@@ -11,7 +11,9 @@ set(TESTS
     test_inductor.c
     test_jfet_n.c
     test_jfet_p.c
+    test_none.c
     test_resistor.c
+    test_ujt.c
     test_zener.c
 )
 

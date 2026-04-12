@@ -22,11 +22,6 @@ int test_diode(int argc, char *argv[])
     dut[i++] = NULL;
     assert(i <= sizeof(dut) / sizeof(dut[0]));
 
-    /* sanity check: no device connected */
-    spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
-    component_do_all();
-    assert((result.component == COMPONENT_NONE) || ((result.component == COMPONENT_CAP) && (result.capacitance_pF < 10.0f)));
-
     static const unsigned int probes[6][3] =
     {
         {0, 1, 2},
@@ -41,6 +36,9 @@ int test_diode(int argc, char *argv[])
     {
         asprintf(&dut[2], "d1 /t%u /t%u di_1n4001", probes[i][0], probes[i][1]);
         spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+        free(dut[2]);
+
+        memset(&result, 0xCD, sizeof(result));
         component_do_all();
         assert(result.component == COMPONENT_DIODE);
         assert(fabsf(result.diode_vf - 0.68f) < 0.01f);
@@ -53,7 +51,6 @@ int test_diode(int argc, char *argv[])
 
         assert(result.probes[0] == probes[i][0]);
         assert(result.probes[1] == probes[i][1]);
-        free(dut[2]);
     }
 
     /*
@@ -68,35 +65,39 @@ int test_diode(int argc, char *argv[])
 
         asprintf(&dut[3], "d2 /t%u /t%u di_1n4001", probes[i][0], probes[i][2]);
         spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+        free(dut[3]);
+        memset(&result, 0xCD, sizeof(result));
         component_do_all();
         assert(result.component == COMPONENT_2DIODE);
         assert(fabsf(result.diode_vf_a[i] - 0.43f) < 0.01f);
         assert(fabsf(result.diode_vf_a[(i + (i % 3 + 2)) % 6] - 5.0f) < 0.01f);
-        free(dut[3]);
 
         asprintf(&dut[3], "d2 /t%u /t%u di_1n4001", probes[i][1], probes[i][2]);
         spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+        free(dut[3]);
+        memset(&result, 0xCD, sizeof(result));
         component_do_all();
         assert(result.component == COMPONENT_2DIODE);
         assert(fabsf(result.diode_vf_a[i] - 0.43f) < 0.01f);
         assert(fabsf(result.diode_vf_a[(i + (i % 3 + 2)) % 6] - 5.0f) < 0.01f);
-        free(dut[3]);
 
         asprintf(&dut[3], "d2 /t%u /t%u di_1n4001", probes[i][2], probes[i][0]);
         spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+        free(dut[3]);
+        memset(&result, 0xCD, sizeof(result));
         component_do_all();
         assert(result.component == COMPONENT_2DIODE);
         assert(fabsf(result.diode_vf_a[i] - 0.43f) < 0.01f);
         assert(fabsf(result.diode_vf_a[(i + (i % 3 + 2)) % 6] - 5.0f) < 0.01f);
-        free(dut[3]);
 
         asprintf(&dut[3], "d2 /t%u /t%u di_1n4001", probes[i][2], probes[i][1]);
         spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+        free(dut[3]);
+        memset(&result, 0xCD, sizeof(result));
         component_do_all();
         assert(result.component == COMPONENT_2DIODE);
         assert(fabsf(result.diode_vf_a[i] - 0.43f) < 0.01f);
         assert(fabsf(result.diode_vf_a[(i + (i % 3 + 2)) % 6] - 5.0f) < 0.01f);
-        free(dut[3]);
 
         free(dut[2]);
     }

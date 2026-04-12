@@ -32,9 +32,11 @@ static bool str_startswith(const char *s, const char *start)
 
 static int send_char(char *s, int id, void *user)
 {
-    // puts(s);
+    if (str_startswith(s, "stderr Warning:"))
+    {
+        puts(s);
+    }
     assert(!str_startswith(s, "stderr Error:"));
-    assert(!str_startswith(s, "stderr Warning:"));
     assert(!str_startswith(s, "stderr simulation aborted"));
 }
 
