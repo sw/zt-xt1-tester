@@ -38,6 +38,7 @@ static int send_char(char *s, int id, void *user)
     }
     assert(!str_startswith(s, "stderr Error:"));
     assert(!str_startswith(s, "stderr simulation aborted"));
+    assert(!str_startswith(s, "stderr run simulation(s) aborted"));
 }
 
 static int send_stat(char *stat, int id, void *user)

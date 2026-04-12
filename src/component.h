@@ -13,6 +13,8 @@ typedef enum : uint8_t
     COMPONENT_UJT        =  6,
     COMPONENT_EMOS       =  7,
     COMPONENT_IGBT       =  8,
+    COMPONENT_THYRISTOR  =  9,
+    COMPONENT_TRIAC      = 10,
     COMPONENT_DIODE      = 11,
     COMPONENT_2DIODE     = 12,
     COMPONENT_BATTERY    = 13,
@@ -48,6 +50,8 @@ bool jfet(void);
 bool resistor(void);
 void resistor_measure(int a, int b, int param);
 bool resistor_tool(void);
+
+bool thy_triac(void);
 
 bool ujt(void);
 

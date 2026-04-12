@@ -1,7 +1,6 @@
+#include "component.h"
 #include "globals.h"
 #include "uart.h"
-
-static bool thy_triac(void) { return false; }
 
 void component_do_all(void)
 {

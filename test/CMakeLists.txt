@@ -13,6 +13,7 @@ set(TESTS
     test_jfet_p.c
     test_none.c
     test_resistor.c
+    test_thyristor.c
     test_ujt.c
     test_zener.c
 )

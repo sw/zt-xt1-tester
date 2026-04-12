@@ -23,6 +23,7 @@ list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/jfet.c
     ${CMAKE_SOURCE_DIR}/src/probe.c
     ${CMAKE_SOURCE_DIR}/src/resistor.c
+    ${CMAKE_SOURCE_DIR}/src/thy_triac.c
     ${CMAKE_SOURCE_DIR}/src/tool.c
     ${CMAKE_SOURCE_DIR}/src/ujt.c
     ${CMAKE_SOURCE_DIR}/src/zener.c
