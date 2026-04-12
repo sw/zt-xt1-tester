@@ -18,6 +18,7 @@ list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/dmos.c
     ${CMAKE_SOURCE_DIR}/src/emos.c
     ${CMAKE_SOURCE_DIR}/src/globals.c
+    ${CMAKE_SOURCE_DIR}/src/igbt.c
     ${CMAKE_SOURCE_DIR}/src/inductor.c
     ${CMAKE_SOURCE_DIR}/src/jfet.c
     ${CMAKE_SOURCE_DIR}/src/probe.c

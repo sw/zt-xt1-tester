@@ -11,6 +11,7 @@ typedef enum : uint8_t
     COMPONENT_BJT        =  4,
     COMPONENT_DARLINGTON =  5,
     COMPONENT_EMOS       =  7,
+    COMPONENT_IGBT       =  8,
     COMPONENT_DIODE      = 11,
     COMPONENT_2DIODE     = 12,
     COMPONENT_BATTERY    = 13,
@@ -35,6 +36,8 @@ void diode_forward_reverse(unsigned int pa, unsigned int pk);
 bool dmos(void);
 
 bool emos(void);
+
+bool igbt(void);
 
 bool inductor(void);
 bool inductor_tool(void);
