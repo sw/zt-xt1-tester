@@ -72,7 +72,7 @@ static void cmd_wait_ir(void)
     mainloop_seconds = 0;
     tool = TOOL_NONE;
     calib_timeout = 0;
-    calib_request = 0;
+    calib_step = CALIB_IDLE;
     if (uart_frame_rx.id == 1)
     {
         uart_send(1, 0);
@@ -98,8 +98,11 @@ static void cmd_wait_ir(void)
                 }
                 break;
             case TOOL_CALIBRATE:
-                calib_request = true;
+                calib_step = CALIB_PROBES_CHECK_SHORTED;
                 tool = uart_frame_rx.test_type;
+                break;
+            default:
+                tool = TOOL_NONE;
                 break;
         }
     }

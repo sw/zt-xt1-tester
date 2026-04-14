@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "calib.h"
 #include "component.h"
 #include "debug.h"
 #include "tool.h"
@@ -84,7 +85,7 @@ static_assert(sizeof(result_t) == 88);
 
 extern calibration_t calibration;
 extern uint_least8_t calib_timeout;
-extern uint_least8_t calib_request;
+extern calib_step_t  calib_step;
 
 extern uart_frame_rx_t uart_frame_rx;
 extern uart_frame_tx_t uart_frame_tx;

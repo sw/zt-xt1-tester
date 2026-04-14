@@ -2,7 +2,7 @@
 
 calibration_t calibration;
 uint_least8_t calib_timeout;
-uint_least8_t calib_request;
+calib_step_t  calib_step;
 
 uart_frame_rx_t uart_frame_rx;
 uart_frame_tx_t uart_frame_tx;

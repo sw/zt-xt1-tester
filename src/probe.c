@@ -1,5 +1,7 @@
+#include <math.h>
 #include "adc.h"
 #include "debug.h"
+#include "globals.h"
 #include "helpers.h"
 #include "timer.h"
 #include "probe.h"
@@ -146,4 +148,181 @@ void probe_discharge(uint_fast8_t p0, uint_fast8_t p1)
         u = adc_average(channels[p1], 100) * (5.0f / 4095.0f);
     }
     while (0.01f < u);
+}
+
+static bool probe_all_shorted_inner(unsigned int p0, unsigned int p1, unsigned int p2)
+{
+    static const unsigned int channels[3] = {1, 3, 7};
+
+    debug_log("%s(%u, %u, %u)\n", __FUNCTION__, p0, p1, p2);
+
+    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    tim6_msleep(10);
+    float u0 = adc_average(channels[p0], 100) * (5.0f / 4095.0f);
+    float u1 = adc_average(channels[p1], 100) * (5.0f / 4095.0f);
+    float u2 = adc_average(channels[p2], 100) * (5.0f / 4095.0f);
+    if ((u0 > 0.1f) || (u1 > 0.1f) || (u2 > 0.1f))
+    {
+        return false;
+    }
+
+    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    tim6_msleep(10);
+    u0 = adc_average(channels[p0], 100) * (5.0f / 4095.0f);
+    u1 = adc_average(channels[p1], 100) * (5.0f / 4095.0f);
+    u2 = adc_average(channels[p2], 100) * (5.0f / 4095.0f);
+    if ((u0 < 4.8f) || (u1 < 4.8f) || (u2 < 4.8f))
+    {
+        return false;
+    }
+
+    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    tim6_msleep(10);
+    u0 = adc_average(channels[p0], 100) * (5.0f / 4095.0f);
+    u1 = adc_average(channels[p1], 100) * (5.0f / 4095.0f);
+    u2 = adc_average(channels[p2], 100) * (5.0f / 4095.0f);
+    if (   (u0 < 2.4f) || (u0 > 2.6f)
+        || (u1 < 2.4f) || (u1 > 2.6f)
+        || (u2 < 2.4f) || (u2 > 2.6f) )
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool probe_all_shorted(void)
+{
+    static const unsigned int probes[][3] =
+    {
+        {0, 1, 2},
+        {0, 2, 1},
+        {1, 0, 2},
+        {1, 2, 0},
+        {2, 0, 1},
+        {2, 1, 0},
+    };
+
+    for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
+    {
+        if (!probe_all_shorted_inner(probes[i][0], probes[i][1], probes[i][2]))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+void probe_calibrate_resistance(void)
+{
+    static const unsigned int channels[3] = {1, 3, 7};
+    static const unsigned int probes[][3] =
+    {
+        {0, 1, 2},
+        {0, 2, 1},
+        {1, 0, 2},
+        {1, 2, 0},
+        {2, 0, 1},
+        {2, 1, 0},
+    };
+
+    float r680_sum = 0.0f;
+    float r0_sum   = 0.0f;
+    for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
+    {
+        probe_configure(probes[i][0], PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+        probe_configure(probes[i][1], PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+        probe_configure(probes[i][2], PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+        tim6_msleep(1);
+        r680_sum += adc_average(channels[probes[i][2]], 500);
+        probe_configure(probes[i][0], PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+        tim6_msleep(1);
+        r0_sum += adc_average(channels[probes[i][2]], 500);
+    }
+    probe_configure(0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+
+    float r0_avg   = r0_sum   / 6.0f;
+    float r680_avg = r680_sum / 6.0f;
+    float rd = 680.0f / (4095.0f / r680_avg - 4095.0f / r0_avg);
+    float rp = rd * (4095.0f - r0_avg) / r0_avg;
+
+    if ((fabsf(rd) < 30.0f) && (fabsf(rp) < 30.0f))
+    {
+        calibration.rp = rp;
+        calibration.rd = rd;
+    }
+    else
+    {
+        calibration.rp = 15.0f;
+        calibration.rd = 15.0f;
+    }
+}
+
+static bool probe_all_open_inner(unsigned int p0, unsigned int p1, unsigned int p2)
+{
+    static const unsigned int channels[3] = {1, 3, 7};
+
+    debug_log("%s(%u, %u, %u)\n", __FUNCTION__, p0, p1, p2);
+
+    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    tim6_msleep(10);
+    float u0 = adc_average(channels[p0], 100) * (5.0f / 4095.0f);
+    float u1 = adc_average(channels[p1], 100) * (5.0f / 4095.0f);
+    if ((0.1f < u0) || (u1 < 4.8f))
+    {
+        return false;
+    }
+    return true;
+}
+
+bool probe_all_open(void)
+{
+    static const unsigned int probes[][3] =
+    {
+        {0, 1, 2},
+        {0, 2, 1},
+        {1, 0, 2},
+        {1, 2, 0},
+        {2, 0, 1},
+        {2, 1, 0},
+    };
+
+    for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
+    {
+        if (!probe_all_open_inner(probes[i][0], probes[i][1], probes[i][2]))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+void probe_calibrate_capacitance(void)
+{
+    cap_small(0, 1, 2, false);
+    calibration.probe12_cap = result.capacitance_pF;
+    cap_small(0, 2, 1, false);
+    calibration.probe13_cap = result.capacitance_pF;
+    cap_small(1, 0, 2, false);
+    calibration.probe21_cap = result.capacitance_pF;
+    cap_small(1, 2, 0, false);
+    calibration.probe23_cap = result.capacitance_pF;
+    cap_small(2, 0, 1, false);
+    calibration.probe31_cap = result.capacitance_pF;
+    cap_small(2, 1, 0, false);
+    calibration.probe32_cap = result.capacitance_pF;
+
+    probe_configure(0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
 }

@@ -1,10 +1,14 @@
 #include <string.h>
+#include "calib.h"
 #include "globals.h"
-#include "uart.h"
+#include "probe.h"
 #include "tool.h"
+#include "uart.h"
 
 void tool_do(void)
 {
+    calib_timeout++;
+
     if (tool == TOOL_RESISTOR)
     {
         resistor_tool();
@@ -37,7 +41,58 @@ void tool_do(void)
     }
     else if (tool == TOOL_CALIBRATE)
     {
+        switch (calib_step)
+        {
+            case CALIB_PROBES_CHECK_SHORTED:
+                if (probe_all_shorted())
+                {
+                    calib_step = CALIB_PROBES_RESISTANCE;
+                }
+                uart_frame_tx.payload[0] = calib_step;
+                uart_send(8, 1);
+                if (calib_timeout < 60)
+                {
+                    return;
+                }
+                /* timeout expired */
+                calib_timeout = 0;
+                calib_step = CALIB_TIMEOUT;
+                break;
 
+            case CALIB_PROBES_RESISTANCE:
+                probe_calibrate_resistance();
+                calib_step = CALIB_PROBES_CHECK_OPEN;
+                break;
+
+            case CALIB_PROBES_CHECK_OPEN:
+                if (probe_all_open())
+                {
+                    calib_step = CALIB_PROBES_CAPACITANCE;
+                }
+                break;
+
+            case CALIB_PROBES_CAPACITANCE:
+                probe_calibrate_capacitance();
+                calib_step = CALIB_STORE;
+                break;
+
+            case CALIB_STORE:
+                calib_step = CALIB_IDLE;
+                debug_log("Rp=%.2f\n", calibration.rp);
+                debug_log("Rd=%.2f\n", calibration.rd);
+                debug_log("Probe12_Cap=%.2f\n", calibration.probe12_cap);
+                debug_log("Probe13_Cap=%.2f\n", calibration.probe13_cap);
+                debug_log("Probe21_Cap=%.2f\n", calibration.probe21_cap);
+                debug_log("Probe23_Cap=%.2f\n", calibration.probe23_cap);
+                debug_log("Probe31_Cap=%.2f\n", calibration.probe31_cap);
+                debug_log("Probe32_Cap=%.2f\n", calibration.probe32_cap);
+                calib_write();
+                return;
+
+            default:
+                return;
+        }
+        uart_frame_tx.payload[0] = calib_step;
         uart_send(8, 1);
         return;
     }
