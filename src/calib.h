@@ -2,6 +2,22 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "debug.h"
+
+typedef struct
+{
+    uint32_t magic0;
+    float probe12_cap;
+    float probe13_cap;
+    float probe21_cap;
+    float probe23_cap;
+    float probe31_cap;
+    float probe32_cap;
+    float rp;
+    float rd;
+    uint32_t magic1;
+} calibration_t;
+static_assert(sizeof(calibration_t) == 40);
 
 typedef enum : uint8_t
 {

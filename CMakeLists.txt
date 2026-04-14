@@ -25,6 +25,7 @@ list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/resistor.c
     ${CMAKE_SOURCE_DIR}/src/thy_triac.c
     ${CMAKE_SOURCE_DIR}/src/tool.c
+    ${CMAKE_SOURCE_DIR}/src/uart.c
     ${CMAKE_SOURCE_DIR}/src/ujt.c
     ${CMAKE_SOURCE_DIR}/src/zener.c
 )
@@ -57,7 +58,6 @@ else()
         ${CMAKE_SOURCE_DIR}/src/main.c
         ${CMAKE_SOURCE_DIR}/src/n32g031_it.c
         ${CMAKE_SOURCE_DIR}/src/timer.c
-        ${CMAKE_SOURCE_DIR}/src/uart.c
     )
     add_executable(${PROJECT_NAME} ${SOURCES})
 

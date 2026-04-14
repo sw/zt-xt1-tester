@@ -5,22 +5,8 @@
 #include "calib.h"
 #include "component.h"
 #include "debug.h"
+#include "main.h"
 #include "tool.h"
-
-typedef struct
-{
-    uint32_t magic0;
-    float probe12_cap;
-    float probe13_cap;
-    float probe21_cap;
-    float probe23_cap;
-    float probe31_cap;
-    float probe32_cap;
-    float rp;
-    float rd;
-    uint32_t magic1;
-} calibration_t;
-static_assert(sizeof(calibration_t) == 40);
 
 typedef struct
 {
@@ -45,43 +31,6 @@ typedef union
     uint8_t raw[94];
 } uart_frame_tx_t;
 static_assert(sizeof(uart_frame_tx_t) == 94);
-
-typedef struct
-{
-    component_t component;
-    uint8_t subtype;
-    uint8_t probes[3];
-    uint8_t bd;
-    uint8_t unknown[6];
-    float resistance;
-    float capacitance_pF;
-    float inductance_uH;
-    float diode_vf;
-    float hfe;
-    union
-    {
-        float bjt_ube;
-        float emos_uth;
-        float jfet_ug;
-    };
-    union {
-        float ic_mA;
-        float diode_ir_mA;
-    };
-    float cap_vloss;
-    float temperature;
-    float humidity;
-    union {
-        float diode_vf_a[6];
-        struct {
-            float misc[2];
-            float infrared_f;
-        };
-    };
-    uint8_t infrared_unknown[4];
-    uint32_t temp_hum[2];
-} result_t;
-static_assert(sizeof(result_t) == 88);
 
 extern calibration_t calibration;
 extern uint_least8_t calib_timeout;

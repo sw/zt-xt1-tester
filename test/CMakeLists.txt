@@ -22,7 +22,7 @@ create_test_sourcelist(SOURCES_TEST test_driver.c ${TESTS})
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${SOURCES_TEST} helpers.c spice.c)
 
-target_link_libraries(${PROJECT_NAME} m ngspice)
+target_link_libraries(${PROJECT_NAME} cmocka m ngspice)
 
 foreach(test ${TESTS})
     get_filename_component(name ${test} NAME_WE)

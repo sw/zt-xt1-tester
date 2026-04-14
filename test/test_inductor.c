@@ -1,33 +1,34 @@
-#include <assert.h>
-#include <math.h>
+#include <cmocka.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "calib.h"
 #include "component.h"
-#include "globals.h"
+#include "globals.h" /* TODO: remove */
+#include "main.h"
 #include "spice.h"
 
-int test_inductor(int argc, char *argv[])
+extern uint8_t uart_received[];
+static const result_t *const result_p = (result_t *)uart_received;
+
+static const unsigned int probes[][2] = { {0, 1}, {0, 2}, {1, 2} };
+
+static int setup(void **state)
 {
     calib_default();
     spice_init();
+    return 0;
+}
 
-    char *dut[3];
+static int teardown(void **state)
+{
+    spice_uninit();
+    return 0;
+}
+
+static void test_component(void **state)
+{
+    char *dut[3] = { NULL };
     int i = 0;
-    dut[i++] = "";
-    dut[i++] = "";
-    dut[i++] = NULL;
-    assert(i <= sizeof(dut) / sizeof(dut[0]));
-
-    /* sanity check: no device connected */
-    spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
-    memset(&result, 0xCD, sizeof(result));
-    tool = TOOL_INDUCTOR;
-    tool_do();
-    assert(result.component == COMPONENT_NONE);
-
-    static const unsigned int probes[3][2] = { {0, 1}, {0, 2}, {1, 2} };
 
     for (float l = 10e3f; l <= 100e3f; l *= 10.0f)
     {
@@ -40,24 +41,53 @@ int test_inductor(int argc, char *argv[])
         free(dut[0]);
         free(dut[1]);
 
-        memset(&result, 0xCD, sizeof(result));
+        expect_uint_value(uart_send, id, 2);
+        expect_uint_value(uart_send, length, 88);
         component_do_all();
-        assert(result.component == COMPONENT_INDUCTOR);
-        assert(fabsf(result.inductance_uH - l) < l * 0.02f);
-        assert(fabsf(result.resistance - 2) < 2 * 0.05f);
-        assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
-                || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
 
-        memset(&result, 0xCD, sizeof(result));
+        assert_uint_equal(result_p->component, COMPONENT_INDUCTOR);
+        assert_float_equal(result_p->inductance_uH, l, l * 0.02f);
+        assert_float_equal(result_p->resistance, 2.0f, 0.1f);
+        assert_true(   ((result_p->probes[0] == probes[i][0]) && (result_p->probes[2] == probes[i][1]))
+                    || ((result_p->probes[0] == probes[i][1]) && (result_p->probes[2] == probes[i][0])) );
+    }
+}
+
+static void test_tool(void **state)
+{
+    char *dut[3] = { NULL };
+    int i = 0;
+
+    for (float l = 10e3f; l <= 100e3f; l *= 10.0f)
+    {
+        i = (i + 1) % (sizeof(probes) / sizeof(probes[0]));
+
+        asprintf(&dut[0], "l1 /t%u /xx %fu", probes[i][0], l);
+        /* simulate 2ohm resistance */
+        asprintf(&dut[1], "r1 /xx /t%u 2", probes[i][1]);
+        spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+        free(dut[0]);
+        free(dut[1]);
+
+        expect_uint_value(uart_send, id, 4);
+        expect_uint_value(uart_send, length, 88);
         tool = TOOL_INDUCTOR;
         tool_do();
-        assert(result.component == COMPONENT_INDUCTOR);
-        assert(fabsf(result.inductance_uH - l) < l * 0.02f);
-        assert(fabsf(result.resistance - 2) < 2 * 0.05f);
-        assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
-                || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
-    }
 
-    spice_uninit();
-    return 0;
+        assert_uint_equal(result_p->component, COMPONENT_INDUCTOR);
+        assert_float_equal(result_p->inductance_uH, l, l * 0.02f);
+        assert_float_equal(result_p->resistance, 2.0f, 0.1f);
+        assert_true(   ((result_p->probes[0] == probes[i][0]) && (result_p->probes[2] == probes[i][1]))
+                    || ((result_p->probes[0] == probes[i][1]) && (result_p->probes[2] == probes[i][0])) );
+    }
+}
+
+int test_inductor(int argc, char *argv[])
+{
+    static const struct CMUnitTest tests[] =
+    {
+        cmocka_unit_test(test_component),
+        cmocka_unit_test(test_tool),
+    };
+    return cmocka_run_group_tests(tests, setup, teardown);
 }

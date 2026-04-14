@@ -1,7 +1,8 @@
 #include <string.h>
-#include "n32g031_usart.h"
 #include "globals.h"
 #include "uart.h"
+#ifdef __ARM_EABI__
+#include "n32g031_usart.h"
 
 void uart_init(void)
 {
@@ -9,7 +10,7 @@ void uart_init(void)
     NVIC_InitType NVIC_InitStruct;
     DMA_InitType DMA_InitParam;
     GPIO_InitType GPIO_InitStruct;
-    
+
     GPIO_InitStruct.Pin = GPIO_PIN_9;
     GPIO_InitStruct.GPIO_Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.GPIO_Alternate = GPIO_AF4_USART1;
@@ -36,7 +37,7 @@ void uart_init(void)
     NVIC_InitStruct.NVIC_IRQChannelPriority = 0;
     NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStruct);
-    
+
     DMA_DeInit(DMA_CH5);
     DMA_StructInit(&DMA_InitParam);
     DMA_InitParam.PeriphAddr = USART1->DAT;
@@ -80,6 +81,7 @@ void uart_send(uint_fast8_t id, size_t length)
     }
     while (USART_GetFlagStatus(USART1, USART_FLAG_TXDE) == RESET) { }
 }
+#endif /* __ARM_EABI__ */
 
 void uart_send_result(void)
 {

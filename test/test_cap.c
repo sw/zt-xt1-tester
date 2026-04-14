@@ -1,26 +1,34 @@
-#include <assert.h>
-#include <math.h>
+#include <cmocka.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "calib.h"
 #include "component.h"
-#include "globals.h"
+#include "main.h"
 #include "spice.h"
 
-int test_cap(int argc, char *argv[])
+extern uint8_t uart_received[];
+static const result_t *const result_p = (result_t *)uart_received;
+
+static const unsigned int probes[][2] = { {0, 1}, {0, 2}, {1, 2} };
+
+static int setup(void **state)
 {
     calib_default();
     spice_init();
+    return 0;
+}
 
-    char *dut[3];
+static int teardown(void **state)
+{
+    // segfaults ¯\_(ツ)_/¯
+    // spice_uninit();
+    return 0;
+}
+
+static void test_component(void **state)
+{
+    char *dut[3] = { NULL };
     int i = 0;
-    dut[i++] = "";
-    dut[i++] = "";
-    dut[i++] = NULL;
-    assert(i <= sizeof(dut) / sizeof(dut[0]));
-
-    static const unsigned int probes[3][2] = { {0, 1}, {0, 2}, {1, 2} };
 
     /* TODO: >=5mF (cap_bat_find/cap_big) */
     for (float c = 150; c < 5e9f; c *= 20.0f)
@@ -34,18 +42,31 @@ int test_cap(int argc, char *argv[])
         free(dut[0]);
         free(dut[1]);
 
-        memset(&result, 0xCD, sizeof(result));
+        expect_uint_value(uart_send, id, 2);
+        expect_uint_value(uart_send, length, 88);
         component_do_all();
-        assert(result.component == COMPONENT_CAP);
-        assert(fabsf(result.capacitance_pF - c) < c * 0.05f + 11.0f);
-        /* ESR is wildly wrong... */
-        assert((c < 700e3f) || ((result.resistance > 1.0f) && (result.resistance < 10.5f)));
-        assert((c < 90e3f) || ((result.cap_vloss > 1.6f) && (result.cap_vloss < 7.6f)));
-        assert(   ((result.probes[0] == probes[i][0]) && (result.probes[2] == probes[i][1]))
-                || ((result.probes[0] == probes[i][1]) && (result.probes[2] == probes[i][0])) );
-    }
 
-    // segfaults
-    // spice_uninit();
-    return 0;
+        assert_uint_equal(result_p->component, COMPONENT_CAP);
+        assert_float_equal(result_p->capacitance_pF, c, c * 0.05f + 11.0f);
+        if (c > 700e3)
+        {
+            /* ESR is wildly wrong... */
+            assert_float_in_range(result_p->resistance, 1.0f, 10.5f, 0.0f);
+        }
+        if (c > 90e3f)
+        {
+            assert_float_in_range(result_p->cap_vloss, 1.6f, 7.6f, 0.0f);
+        }
+        assert_true(   ((result_p->probes[0] == probes[i][0]) && (result_p->probes[2] == probes[i][1]))
+                    || ((result_p->probes[0] == probes[i][1]) && (result_p->probes[2] == probes[i][0])) );
+    }
+}
+
+int test_cap(int argc, char *argv[])
+{
+    static const struct CMUnitTest tests[] =
+    {
+        cmocka_unit_test(test_component),
+    };
+    return cmocka_run_group_tests(tests, setup, teardown);
 }
