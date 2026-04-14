@@ -1,7 +1,7 @@
 #include <cmocka.h>
 #include "calib.h"
 #include "component.h"
-#include "globals.h" /* TODO: remove */
+#include "helpers.h"
 #include "main.h"
 #include "spice.h"
 
@@ -12,7 +12,6 @@ static int setup(void **state)
 {
     calib_default();
     spice_init();
-    zener_enabled = 1;
     return 0;
 }
 
@@ -32,9 +31,12 @@ static void test_1n5221(void **state)
     };
     spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
 
-    expect_uint_value(uart_send, id, 2);
-    expect_uint_value(uart_send, length, 88);
-    component_do_all();
+    expect_ack();
+    expect_uint_value(opamp_enable, enable, true);
+    expect_uint_value(opamp_enable, enable, false);
+    expect_result();
+    mock_uart(1, 0, 1, (uint8_t[]){1});
+    main_cycle();
 
     assert_uint_equal(result_p->component, COMPONENT_ZENER);
     assert_float_equal(result_p->diode_vf, 2.18f, 0.01f);
@@ -50,9 +52,12 @@ static void test_1n4751(void **state)
     };
     spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
 
-    expect_uint_value(uart_send, id, 2);
-    expect_uint_value(uart_send, length, 88);
-    component_do_all();
+    expect_ack();
+    expect_uint_value(opamp_enable, enable, true);
+    expect_uint_value(opamp_enable, enable, false);
+    expect_result();
+    mock_uart(1, 0, 1, (uint8_t[]){1});
+    main_cycle();
 
     assert_uint_equal(result_p->component, COMPONENT_ZENER);
     assert_float_equal(result_p->diode_vf, 29.8f, 0.1f);

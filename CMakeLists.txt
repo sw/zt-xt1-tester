@@ -21,6 +21,7 @@ list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/igbt.c
     ${CMAKE_SOURCE_DIR}/src/inductor.c
     ${CMAKE_SOURCE_DIR}/src/jfet.c
+    ${CMAKE_SOURCE_DIR}/src/main.c
     ${CMAKE_SOURCE_DIR}/src/probe.c
     ${CMAKE_SOURCE_DIR}/src/resistor.c
     ${CMAKE_SOURCE_DIR}/src/thy_triac.c
@@ -55,7 +56,6 @@ else()
         ${CMAKE_SOURCE_DIR}/src/comp.c
         ${CMAKE_SOURCE_DIR}/src/gpio.c
         ${CMAKE_SOURCE_DIR}/src/helpers.c
-        ${CMAKE_SOURCE_DIR}/src/main.c
         ${CMAKE_SOURCE_DIR}/src/n32g031_it.c
         ${CMAKE_SOURCE_DIR}/src/timer.c
     )

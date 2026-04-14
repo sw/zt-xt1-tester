@@ -1,15 +1,18 @@
+#include "main.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include "n32g031_iwdg.h"
-#include "n32g031_rcc.h"
-#include "n32g031_tim.h"
 #include "adc.h"
 #include "calib.h"
 #include "globals.h"
+#include "helpers.h"
 #include "timer.h"
 #include "tool.h"
 #include "uart.h"
+#ifdef __ARM_EABI__
+#include "n32g031_iwdg.h"
+#include "n32g031_rcc.h"
+#include "n32g031_tim.h"
 
 static void clock_enable(void)
 {
@@ -59,68 +62,6 @@ static void iwdg_setup(void)
     IWDG_Enable();
 }
 
-/* wait for command received via UART, meanwhile decode infrared */
-static void cmd_wait_ir(void)
-{
-    if (!uart_rx_pending)
-    {
-        goto no_cmd_received;
-    }
-    uart_frame_tx.counter = uart_frame_rx.counter;
-    result.component = COMPONENT_NONE;
-    mainloop_centiseconds = 0;
-    mainloop_seconds = 0;
-    tool = TOOL_NONE;
-    calib_timeout = 0;
-    calib_step = CALIB_IDLE;
-    if (uart_frame_rx.id == 1)
-    {
-        uart_send(1, 0);
-        zener_enabled = uart_frame_rx.test_type;
-        component_do_all();
-    }
-    else if (uart_frame_rx.id == 3)
-    {
-        switch (uart_frame_rx.test_type)
-        {
-            case TOOL_RESISTOR:
-            case TOOL_INDUCTOR:
-            case TOOL_TEMP_DS18B20:
-            case TOOL_TEMP_HUM_DHT11:
-                tool = uart_frame_rx.test_type;
-                break;
-            case TOOL_INFRARED:
-                // infrared_detected = infrared_detect();
-                if (false) // (infrared_detected)
-                {
-                    memcpy(uart_frame_tx.payload, &result, sizeof(result));
-                    uart_send(4, sizeof(result)); /* different id from uart_send_result. TODO: merge */
-                }
-                break;
-            case TOOL_CALIBRATE:
-                calib_step = CALIB_PROBES_CHECK_SHORTED;
-                tool = uart_frame_rx.test_type;
-                break;
-            default:
-                tool = TOOL_NONE;
-                break;
-        }
-    }
-
-    uart_rx_pending = false;
-    /* re-arm DMA transfer. TODO: move to uart.c */
-    DMA_SetCurrDataCounter(DMA_CH5, sizeof(uart_frame_rx_t));
-    DMA_EnableChannel(DMA_CH5, ENABLE);
-no_cmd_received:
-    // infrared_read();
-    if (false) // (infrared_decoded)
-    {
-        memcpy(uart_frame_tx.payload, &result, sizeof(result));
-        uart_send(4, sizeof(result));  /* different id from uart_send_result. TODO: merge */
-        // infrared_decoded = false;
-    }
-}
-
 int main(void)
 {
     clock_enable();
@@ -141,11 +82,77 @@ int main(void)
 
     while (true)
     {
-        do
+        main_cycle();
+    }
+}
+#endif /* __ARM_EABI__ */
+
+/* wait for command received via UART, meanwhile decode infrared */
+static void cmd_wait_ir(void)
+{
+    if (!uart_rx_pending)
+    {
+        goto no_cmd_received;
+    }
+    uart_frame_tx.counter = uart_frame_rx.counter;
+    result.component = COMPONENT_NONE;
+    mainloop_centiseconds = 0;
+    mainloop_seconds = 0;
+    tool = TOOL_NONE;
+    calib_timeout = 0;
+    calib_step = CALIB_IDLE;
+    if (uart_frame_rx.id == 1)
+    {
+        uart_send(1, 0);
+        zener_enabled = uart_frame_rx.payload[0];
+        component_do_all();
+    }
+    else if (uart_frame_rx.id == 3)
+    {
+        switch (uart_frame_rx.payload[0])
         {
-            IWDG_ReloadKey();
-            cmd_wait_ir();
-        } while (mainloop_seconds == 0);
+            case TOOL_RESISTOR:
+            case TOOL_INDUCTOR:
+            case TOOL_TEMP_DS18B20:
+            case TOOL_TEMP_HUM_DHT11:
+                tool = uart_frame_rx.payload[0];
+                break;
+            case TOOL_INFRARED:
+                // infrared_detected = infrared_detect();
+                if (false) // (infrared_detected)
+                {
+                    memcpy(uart_frame_tx.payload, &result, sizeof(result));
+                    uart_send(4, sizeof(result)); /* different id from uart_send_result. TODO: merge */
+                }
+                break;
+            case TOOL_CALIBRATE:
+                calib_step = CALIB_PROBES_CHECK_SHORTED;
+                tool = uart_frame_rx.payload[0];
+                break;
+            default:
+                tool = TOOL_NONE;
+                break;
+        }
+    }
+
+    uart_rx_pending = false;
+    uart_rx_rearm();
+no_cmd_received:
+    // infrared_read();
+    if (false) // (infrared_decoded)
+    {
+        memcpy(uart_frame_tx.payload, &result, sizeof(result));
+        uart_send(4, sizeof(result));  /* different id from uart_send_result. TODO: merge */
+        // infrared_decoded = false;
+    }
+}
+
+void main_cycle(void)
+{
+    iwdg_reload();
+    cmd_wait_ir();
+    if (mainloop_seconds)
+    {
         mainloop_seconds = 0;
         tool_do();
     }

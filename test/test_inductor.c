@@ -3,9 +3,10 @@
 #include <stdlib.h>
 #include "calib.h"
 #include "component.h"
-#include "globals.h" /* TODO: remove */
+#include "helpers.h"
 #include "main.h"
 #include "spice.h"
+#include "tool.h"
 
 extern uint8_t uart_received[];
 static const result_t *const result_p = (result_t *)uart_received;
@@ -41,9 +42,10 @@ static void test_component(void **state)
         free(dut[0]);
         free(dut[1]);
 
-        expect_uint_value(uart_send, id, 2);
-        expect_uint_value(uart_send, length, 88);
-        component_do_all();
+        expect_ack();
+        expect_result();
+        mock_uart(1, 0, 1, (uint8_t[]){0});
+        main_cycle();
 
         assert_uint_equal(result_p->component, COMPONENT_INDUCTOR);
         assert_float_equal(result_p->inductance_uH, l, l * 0.02f);
@@ -69,10 +71,12 @@ static void test_tool(void **state)
         free(dut[0]);
         free(dut[1]);
 
+        mock_uart(3, 0, 1, (uint8_t[]){TOOL_INDUCTOR});
+        main_cycle();
         expect_uint_value(uart_send, id, 4);
         expect_uint_value(uart_send, length, 88);
-        tool = TOOL_INDUCTOR;
-        tool_do();
+        mock_second_elapsed();
+        main_cycle();
 
         assert_uint_equal(result_p->component, COMPONENT_INDUCTOR);
         assert_float_equal(result_p->inductance_uH, l, l * 0.02f);

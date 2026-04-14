@@ -64,6 +64,12 @@ void uart_init(void)
     uart_send(6, 4);
 }
 
+void uart_rx_rearm(void)
+{
+    DMA_SetCurrDataCounter(DMA_CH5, sizeof(uart_frame_rx_t));
+    DMA_EnableChannel(DMA_CH5, ENABLE);
+}
+
 void uart_send(uint_fast8_t id, size_t length)
 {
     uart_frame_tx.id = id;

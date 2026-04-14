@@ -40,3 +40,5 @@ typedef struct
     uint32_t temp_hum[2];
 } result_t;
 static_assert(sizeof(result_t) == 88);
+
+void main_cycle(void);

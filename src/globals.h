@@ -13,8 +13,7 @@ typedef struct
     uint8_t id;
     uint8_t counter;
     uint8_t unused[4];  /* length / checksum ? */
-    uint8_t test_type;
-    uint8_t unknown[127];
+    uint8_t payload[128];
 } uart_frame_rx_t;
 static_assert(sizeof(uart_frame_rx_t) == 134);
 

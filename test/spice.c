@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <cmocka.h>
 #include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -405,5 +406,6 @@ uint_fast32_t comp_start(unsigned int probe_pull, unsigned int pullup, uint_fast
 
 void opamp_enable(bool enable)
 {
+    check_expected_uint(enable);
     opamp_enabled = enable;
 }

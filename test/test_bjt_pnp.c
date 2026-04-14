@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "calib.h"
 #include "component.h"
+#include "helpers.h"
 #include "main.h"
 #include "spice.h"
 
@@ -36,9 +37,10 @@ static void test_one(void **state)
     spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
     free(dut[1]);
 
-    expect_uint_value(uart_send, id, 2);
-    expect_uint_value(uart_send, length, 88);
-    component_do_all();
+    expect_ack();
+    expect_result();
+    mock_uart(1, 0, 1, (uint8_t[]){0});
+    main_cycle();
 
     assert_uint_equal(result_p->component, COMPONENT_BJT);
     assert_uint_equal(result_p->subtype, 2);
