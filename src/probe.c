@@ -309,6 +309,9 @@ bool probe_all_open(void)
 
 void probe_calibrate_capacitance(void)
 {
+#ifndef __ARM_EABI__
+    tim6_usleep(100); /* not in original firmware, required for simulation */
+#endif
     cap_small(0, 1, 2, false);
     calibration.probe12_cap = result.capacitance_pF;
     cap_small(0, 2, 1, false);

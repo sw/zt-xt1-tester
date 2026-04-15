@@ -1,6 +1,8 @@
 #include <string.h>
 #ifdef __ARM_EABI__
 #include "n32g031_flash.h"
+#else
+#include <cmocka.h>
 #endif
 #include "calib.h"
 #include "globals.h"
@@ -41,6 +43,6 @@ void calib_write(void)
     }
     FLASH_Lock();
 #else
-    assert(false);
+    function_called();
 #endif
 }

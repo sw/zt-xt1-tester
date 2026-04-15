@@ -1,6 +1,7 @@
 set(TESTS
     test_bjt_npn.c
     test_bjt_pnp.c
+    test_calib.c
     test_cap.c
     test_darlington_npn.c
     test_darlington_pnp.c

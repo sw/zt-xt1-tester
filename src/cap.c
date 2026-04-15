@@ -153,6 +153,9 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_
     /* probes are not reset in the original firmware */
     probe_configure(p0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+#ifndef __ARM_EABI__
+    tim6_usleep(20);
+#endif
 
     if (cnt >= timeout)
     {
