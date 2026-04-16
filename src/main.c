@@ -34,7 +34,8 @@ static void clock_enable(void)
 
 static void tim3_init(void)
 {
-    TIM_TimeBaseInitType TIM_TimeBaseInitStruct;
+    /* struct is not initialized in original firmware */
+    TIM_TimeBaseInitType TIM_TimeBaseInitStruct = { 0 };
     NVIC_InitType NVIC_InitStruct;
 
     TIM_TimeBaseInitStruct.Prescaler = 0;
@@ -42,7 +43,6 @@ static void tim3_init(void)
     TIM_TimeBaseInitStruct.Period = 0xffff;
     TIM_TimeBaseInitStruct.ClkDiv = TIM_CLK_DIV1;
     TIM_TimeBaseInitStruct.CapCh3FromCompEn = true;
-    /* TODO: some fields not initialized??? */
     TIM_InitTimeBase(TIM3, &TIM_TimeBaseInitStruct);
     TIM_ConfigInt(TIM3, TIM_INT_UPDATE, ENABLE);
     TIM_Enable(TIM3, ENABLE);

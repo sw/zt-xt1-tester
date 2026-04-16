@@ -6,7 +6,7 @@
 
 bool diode(void)
 {
-    static const unsigned int probes[6][3] =
+    static const unsigned int probes[][3] =
     {
         /* different order than original firmware to simplify tests. TODO: fix tests instead */
         {0, 1, 2},
@@ -32,9 +32,9 @@ bool diode(void)
         tim6_msleep(20);
 
         diode_forward_reverse(probes[i][0], probes[i][1]);
-        if (0.1f < fabsf(result.diode_vf_a[i] - result.diode_vf))
+        if (fabsf(result.diode_vf_a[i] - result.diode_vf) > 0.1f)
         {
-            return false; /* TODO: simulate this case */
+            return false;
         }
         result.diode_vf_a[i] = result.diode_vf;
         ir[i] = result.diode_ir_mA;
@@ -65,13 +65,14 @@ bool diode(void)
         result.diode_vf = result.diode_vf_a[max_idx];
         result.diode_ir_mA = ir[max_idx];
         cap_small(probes[max_idx][0], probes[max_idx][1], probes[max_idx][2], true);
-        if (999.0f < result.capacitance_pF)
+        if (result.capacitance_pF > 999.0f)
         {
             result.capacitance_pF = 0.0f;
         }
         result.probes[0] = probes[max_idx][0];
         result.probes[1] = probes[max_idx][1];
-        debug_log("diode Uf=%f Ir=%fmA C=%fpF probes:%u %u\n", result.diode_vf, result.diode_ir_mA, result.capacitance_pF, result.probes[0], result.probes[1]);
+        debug_log("diode Uf=%.2f Ir=%.1fmA C=%.1fpF probes:%u %u\n",
+            result.diode_vf, result.diode_ir_mA, result.capacitance_pF, result.probes[0], result.probes[1]);
         return true;
     }
     else if (num != 2)
@@ -108,7 +109,9 @@ void diode_forward_reverse(unsigned int pa, unsigned int pk)
 
     probe_configure(pa, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(pk, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+#ifndef __ARM_EABI__
     tim6_usleep(100); /* not in original firmware, required for simulation */
+#endif
     float ua = adc_average(channels[pa], 1000) * (5.0f / 4095.0f);
     float uk = adc_average(channels[pk], 1000) * (5.0f / 4095.0f);
     result.diode_vf = ua - uk;
@@ -118,8 +121,10 @@ void diode_forward_reverse(unsigned int pa, unsigned int pk)
     probe_configure(pk, PROBE_ANALOG, PROBE_DRV_HI, PROBE_DRV_HI);
     tim6_msleep(1);
     probe_configure(pk, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+#ifndef __ARM_EABI__
     tim6_usleep(100); /* not in original firmware, required for simulation */
+#endif
     uk = adc_average(channels[pk], 1000) * (5.0f / 4095.0f);
     result.diode_ir_mA = (5.0f - uk) / 470.0f;
-    debug_log("Ir = (5V - %.2fV) / 470kohm = %.2fuA\n", uk, result.diode_ir_mA * 1000.0f);
+    debug_log("Ir = (5V - %.3fV) / 470kohm = %.2fuA\n", uk, result.diode_ir_mA * 1000.0f);
 }
