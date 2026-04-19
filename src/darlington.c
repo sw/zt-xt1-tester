@@ -61,7 +61,7 @@ static bool darlington_npn(unsigned int pb, unsigned int pc, unsigned int pe)
         debug_log("bad Ic\n");
         return false;
     }
-    result.subtype = 1;
+    result.junction = JUNCTION_NPN;
     return true;
 }
 
@@ -121,7 +121,7 @@ static bool darlington_pnp(unsigned int pb, unsigned int pc, unsigned int pe)
         debug_log("bad Ic\n");
         return false;
     }
-    result.subtype = 2;
+    result.junction = JUNCTION_PNP;
     return true;
 }
 
@@ -170,7 +170,7 @@ bool darlington(void)
     }
 
     result.component = COMPONENT_DARLINGTON;
-    if (result.subtype == 1)
+    if (result.junction == JUNCTION_NPN)
     {
         assert(0 <= npn_idx);
         assert(npn_idx < sizeof(probes) / sizeof(probes[0]));
@@ -185,7 +185,7 @@ bool darlington(void)
     }
     else
     {
-        assert(result.subtype == 2);
+        assert(result.junction == JUNCTION_PNP);
         assert(0 <= pnp_idx);
         assert(pnp_idx < sizeof(probes) / sizeof(probes[0]));
         darlington_pnp(probes[pnp_idx][0], probes[pnp_idx][1], probes[pnp_idx][2]);

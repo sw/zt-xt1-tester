@@ -27,6 +27,18 @@ typedef enum : uint8_t
     COMPONENT_DHT11      = 20,
 } component_t;
 
+typedef enum : uint8_t
+{
+    JUNCTION_NPN = 1,
+    JUNCTION_PNP = 2,
+} junction_t;
+
+typedef enum : uint8_t
+{
+    CHANNEL_N = 1,
+    CHANNEL_P = 2,
+} channel_t;
+
 void component_do_all(void);
 
 bool bjt(void);

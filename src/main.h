@@ -7,9 +7,13 @@
 typedef struct
 {
     component_t component;
-    uint8_t subtype;
+    union
+    {
+        junction_t junction;
+        channel_t channel;
+    };
     uint8_t probes[3];
-    uint8_t bd;
+    uint8_t bd; /* TODO: does this mean body diode? */
     uint8_t unknown0[6];
     float resistance;
     float capacitance_pF;

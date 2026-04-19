@@ -138,7 +138,7 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
 
     debug_log("Found n-channel JFET!\n");
     result.component = COMPONENT_JFET;
-    result.subtype = 1;
+    result.channel = CHANNEL_N;
     result.probes[0] = pg;
     result.probes[1] = pd;
     result.probes[2] = ps;
@@ -275,7 +275,7 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
 
     debug_log("Found p-channel JFET!\n");
     result.component = COMPONENT_JFET;
-    result.subtype = 2;
+    result.channel = CHANNEL_P;
     result.probes[0] = pg;
     result.probes[1] = pd;
     result.probes[2] = ps;

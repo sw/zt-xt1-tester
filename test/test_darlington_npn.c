@@ -46,7 +46,7 @@ static void test_one(void **state)
     main_cycle();
 
     assert_uint_equal(result_p->component, COMPONENT_DARLINGTON);
-    assert_uint_equal(result_p->subtype, 1);
+    assert_uint_equal(result_p->junction, JUNCTION_NPN);
     /* TODO: hFE is hilariously wrong */
     assert_float_equal(result_p->hfe, 71.2f, 1.0f);
     assert_float_equal(result_p->bjt_ube, 1.60f, 0.01f);

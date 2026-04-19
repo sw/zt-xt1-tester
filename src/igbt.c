@@ -74,7 +74,7 @@ static bool igbt_probe(unsigned int pg, unsigned int pc, unsigned int pe)
     probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     cap_small(pe, pg, pc, true);
     result.component = COMPONENT_IGBT;
-    result.subtype = 1;
+    result.junction = JUNCTION_NPN; /* well, not really... */
     result.probes[0] = pg;
     result.probes[1] = pc;
     result.probes[2] = pe;

@@ -43,7 +43,7 @@ static void test_one(void **state)
     main_cycle();
 
     assert_uint_equal(result_p->component, COMPONENT_EMOS);
-    assert_uint_equal(result_p->subtype, 1);
+    assert_uint_equal(result_p->channel, CHANNEL_N);
     assert_float_equal(result_p->resistance, 2.33f, 0.01f);
     assert_float_equal(result_p->emos_uth, 1.75f, 0.01f);
     assert_float_in_range(result_p->capacitance_pF, 41.0, 65.0f, 0.0f);

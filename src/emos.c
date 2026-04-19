@@ -50,7 +50,7 @@ static bool emos_n(unsigned int pg, unsigned int pd, unsigned int ps)
     result.probes[0] = pg;
     result.probes[1] = pd;
     result.probes[2] = ps;
-    result.subtype = 1;
+    result.channel = CHANNEL_N;
     return true;
 }
 
@@ -96,7 +96,7 @@ static bool emos_p(unsigned int pg, unsigned int pd, unsigned int ps)
     result.probes[0] = pg;
     result.probes[1] = pd;
     result.probes[2] = ps;
-    result.subtype = 2;
+    result.channel = CHANNEL_P;
     return true;
 }
 

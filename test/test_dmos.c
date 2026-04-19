@@ -43,7 +43,7 @@ static void test_one(void **state)
     main_cycle();
 
     assert_uint_equal(result_p->component, COMPONENT_DMOS);
-    assert_uint_equal(result_p->subtype, 1);
+    assert_uint_equal(result_p->channel, CHANNEL_N);
     assert_float_equal(result_p->resistance, 5.65f, 0.01f);
     assert_float_equal(result_p->emos_uth, 1.51f, 0.01f);
     /* TODO: check gate capacitance, seems rather high */

@@ -81,8 +81,7 @@ static bool bjt_npn(unsigned int pb, unsigned int pc, unsigned int pe)
     ue = adc_average(channels[pe], 100) * (5.0f / 4095.0f);
     result.diode_vf = ue - uc;
     debug_log("NPN found! Uf = %.3fV - %.3fV = %.3fV\n", ue, uc, result.diode_vf);
-
-    result.subtype = 1;
+    result.junction = JUNCTION_NPN;
     return true;
 }
 
@@ -165,7 +164,7 @@ static bool bjt_pnp(unsigned int pb, unsigned int pc, unsigned int pe)
     ue = adc_average(channels[pe], 100) * (5.0f / 4095.0f);
     result.diode_vf = uc - ue;
     debug_log("PNP found! Uf = %.3fV - %.3fV = %.3fV\n", uc, ue, result.diode_vf);
-    result.subtype = 2;
+    result.junction = JUNCTION_PNP;
     return true;
 }
 
@@ -213,7 +212,7 @@ bool bjt(void)
         return false;
     }
 
-    if (result.subtype == 1)
+    if (result.junction == JUNCTION_NPN)
     {
         assert(0 <= npn_idx);
         assert(npn_idx < sizeof(probes) / sizeof(probes[0]));
@@ -231,7 +230,7 @@ bool bjt(void)
     }
     else
     {
-        assert(result.subtype == 2);
+        assert(result.junction == JUNCTION_PNP);
         assert(0 <= pnp_idx);
         assert(pnp_idx < sizeof(probes) / sizeof(probes[0]));
         if (!bjt_pnp(probes[pnp_idx][0], probes[pnp_idx][1], probes[pnp_idx][2]))
