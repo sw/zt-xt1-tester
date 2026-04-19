@@ -12,6 +12,8 @@ volatile bool uart_rx_pending;
 tool_t tool;
 uint8_t zener_enabled;
 
+bool ir_decoded;
+
 result_t result;
 
 uint_fast8_t adc_sampletime;

@@ -10,7 +10,7 @@ typedef struct
     uint8_t subtype;
     uint8_t probes[3];
     uint8_t bd;
-    uint8_t unknown[6];
+    uint8_t unknown0[6];
     float resistance;
     float capacitance_pF;
     float inductance_uH;
@@ -22,21 +22,21 @@ typedef struct
         float emos_uth;
         float jfet_ug;
     };
-    union {
+    union
+    {
         float ic_mA;
         float diode_ir_mA;
+        float ir_0;
     };
     float cap_vloss;
     float temperature;
     float humidity;
-    union {
+    union
+    {
         float diode_vf_a[6];
-        struct {
-            float misc[2];
-            float infrared_f;
-        };
+        float ir_a[3];
     };
-    uint8_t infrared_unknown[4];
+    uint8_t unknown1[4];
     uint8_t ds18b20_rom_code[8];
 } result_t;
 static_assert(sizeof(result_t) == 88);

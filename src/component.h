@@ -22,6 +22,7 @@ typedef enum : uint8_t
     COMPONENT_RESISTOR   = 15,
     COMPONENT_INDUCTOR   = 16,
     COMPONENT_ZENER      = 17,
+    COMPONENT_INFRARED   = 18,
     COMPONENT_DS18B20    = 19,
     COMPONENT_DHT11      = 20,
 } component_t;
@@ -52,6 +53,9 @@ bool igbt(void);
 
 bool inductor(void);
 bool inductor_tool(void);
+
+bool ir_detect(void);
+void ir_read(void);
 
 bool jfet(void);
 

@@ -15,6 +15,13 @@ void uart_send(uint_fast8_t id, size_t length)
     memcpy(uart_received, uart_frame_tx.payload, length);
 }
 
+bool ir_detect(void)
+{
+    return false;
+}
+
+void ir_read(void) { }
+
 float divf(float x, float y)
 {
     if ((x != 0.0f) && (y != 0.0f))

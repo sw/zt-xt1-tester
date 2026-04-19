@@ -58,6 +58,7 @@ else()
         ${CMAKE_SOURCE_DIR}/src/ds18b20.c
         ${CMAKE_SOURCE_DIR}/src/gpio.c
         ${CMAKE_SOURCE_DIR}/src/helpers.c
+        ${CMAKE_SOURCE_DIR}/src/ir.c
         ${CMAKE_SOURCE_DIR}/src/n32g031_it.c
         ${CMAKE_SOURCE_DIR}/src/timer.c
     )

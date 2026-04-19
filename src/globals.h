@@ -43,6 +43,8 @@ extern volatile bool uart_rx_pending;
 extern tool_t tool;
 extern uint8_t zener_enabled;
 
+extern bool ir_decoded;
+
 extern result_t result;
 
 extern uint_fast8_t adc_sampletime;

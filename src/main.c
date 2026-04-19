@@ -118,8 +118,7 @@ static void cmd_wait_ir(void)
                 tool = uart_frame_rx.payload[0];
                 break;
             case TOOL_INFRARED:
-                // infrared_detected = infrared_detect();
-                if (false) // (infrared_detected)
+                if (ir_detect())
                 {
                     memcpy(uart_frame_tx.payload, &result, sizeof(result));
                     uart_send(4, sizeof(result)); /* different id from uart_send_result. TODO: merge */
@@ -138,12 +137,12 @@ static void cmd_wait_ir(void)
     uart_rx_pending = false;
     uart_rx_rearm();
 no_cmd_received:
-    // infrared_read();
-    if (false) // (infrared_decoded)
+    ir_read();
+    if (ir_decoded)
     {
         memcpy(uart_frame_tx.payload, &result, sizeof(result));
         uart_send(4, sizeof(result));  /* different id from uart_send_result. TODO: merge */
-        // infrared_decoded = false;
+        ir_decoded = false;
     }
 }
 
