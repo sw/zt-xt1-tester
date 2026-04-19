@@ -19,25 +19,29 @@ void tool_do(void)
     }
     else if (tool == TOOL_TEMP_DS18B20)
     {
-        /*
-        if (PTR_config_ram_08009490[0x28] == COMPONENT_TEMPERATURE) {
-            read_temperature();
+#ifdef __ARM_EABI__
+        if (result.component == COMPONENT_DS18B20)
+        {
+            ds18b20_read();
         }
-        else {
-            read_temperature_humidity();
+        else
+        {
+            ds18b20_detect();
         }
-        */
+#endif
     }
     else if (tool == TOOL_TEMP_HUM_DHT11)
     {
-        /*
-        if (PTR_config_ram_08009490[0x28] == COMPONENT_DHT11) {
-            read_dht11();
+#ifdef __ARM_EABI__
+        if (result.component == COMPONENT_DHT11)
+        {
+            dht11_read();
         }
-        else {
-            check_dht11();
+        else
+        {
+            dht11_detect();
         }
-        */
+#endif
     }
     else if (tool == TOOL_CALIBRATE)
     {

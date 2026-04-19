@@ -54,6 +54,8 @@ else()
     list(APPEND SOURCES
         ${CMAKE_SOURCE_DIR}/src/adc.c
         ${CMAKE_SOURCE_DIR}/src/comp.c
+        ${CMAKE_SOURCE_DIR}/src/dht11.c
+        ${CMAKE_SOURCE_DIR}/src/ds18b20.c
         ${CMAKE_SOURCE_DIR}/src/gpio.c
         ${CMAKE_SOURCE_DIR}/src/helpers.c
         ${CMAKE_SOURCE_DIR}/src/n32g031_it.c

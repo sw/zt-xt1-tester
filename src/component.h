@@ -22,6 +22,8 @@ typedef enum : uint8_t
     COMPONENT_RESISTOR   = 15,
     COMPONENT_INDUCTOR   = 16,
     COMPONENT_ZENER      = 17,
+    COMPONENT_DS18B20    = 19,
+    COMPONENT_DHT11      = 20,
 } component_t;
 
 void component_do_all(void);
@@ -33,10 +35,16 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_
 
 bool darlington(void);
 
+bool dht11_detect(void);
+bool dht11_read(void);
+
 bool diode(void);
 void diode_forward_reverse(unsigned int pa, unsigned int pk);
 
 bool dmos(void);
+
+bool ds18b20_detect(void);
+bool ds18b20_read(void);
 
 bool emos(void);
 

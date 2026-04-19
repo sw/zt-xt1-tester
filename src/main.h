@@ -37,7 +37,7 @@ typedef struct
         };
     };
     uint8_t infrared_unknown[4];
-    uint32_t temp_hum[2];
+    uint8_t ds18b20_rom_code[8];
 } result_t;
 static_assert(sizeof(result_t) == 88);
 
