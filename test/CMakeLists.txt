@@ -15,6 +15,7 @@ set(TESTS
     test_none.c
     test_resistor.c
     test_thyristor.c
+    test_triac.c
     test_ujt.c
     test_zener.c
 )

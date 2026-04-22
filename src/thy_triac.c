@@ -108,8 +108,10 @@ static bool thy_triac_distinguish(unsigned int p0, unsigned int p1, unsigned int
     float u0 = adc_average(channels[p0], 100) * (5.0f / 4095.0f);
     if (u1 > 2.5f)
     {
+        debug_log("U1 = %.3fV > 2.5V -> TRIAC\n", u1);
         return true;    /* TRIAC */
     }
+    debug_log("U1 = %.3fV < 2.5V\n", u1);
 
     probe_configure(pg, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
@@ -123,6 +125,7 @@ static bool thy_triac_distinguish(unsigned int p0, unsigned int p1, unsigned int
     u1 = adc_average(channels[p1], 100) * (5.0f / 4095.0f);
     u0 = adc_average(channels[p0], 100) * (5.0f / 4095.0f);
     probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    debug_log("U0 - U1 = %.3fV - %.3fV = %.3fV\n", u0, u1, u0 - u1);
     if (((u0 - u1) < 0.5f) || ((u0 - u1) > 2.5f))
     {
         return false; /* thyristor */
