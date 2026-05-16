@@ -6,6 +6,7 @@
 typedef enum : uint8_t
 {
     COMPONENT_NONE       =  0,
+    COMPONENT_TESTING    =  1,
     COMPONENT_JFET       =  2,
     COMPONENT_DMOS       =  3,
     COMPONENT_BJT        =  4,

@@ -17,7 +17,7 @@ bool ir_detect(void)
     };
 
     result.component = COMPONENT_NONE;
-    result.ir_0 = 0.0f;
+    result.current_mA = 0.0f;
     result.ir_a[0] = 0.0f;
     result.ir_a[1] = 0.0f;
     result.ir_a[2] = 0.0f;
@@ -129,7 +129,7 @@ void ir_read(void)
     buf.result16_1 = ((buf.result << 8) >> 24) * 0x100 + (buf.result >> 24);
 
     ir_decoded = true;
-    result.ir_0 = 1.0f;
+    result.current_mA = 1.0f;
     /* WTF??? */
     result.ir_a[0] = (float)buf.result;
     result.ir_a[1] = (float)buf.result16_0;

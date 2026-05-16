@@ -47,11 +47,13 @@ float inductor_comp(unsigned int p0, unsigned int p1)
     float l2 = -(int)cnt / 48.0f * (result.resistance + 30.0f) / l1;
     debug_log("cnt=%u l2=%.1f\n", cnt, l2);
 
+#ifndef __ARM_EABI__
     /* hack for simulation: avoid misclassing resistors as inductors */
     if (l2 < 180.0f)
     {
         return 0.0f;
     }
+#endif
 
     if (l2 < 265.0f)
     {

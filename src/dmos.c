@@ -21,7 +21,7 @@ static bool dmos_probe(unsigned int pg, unsigned int pd, unsigned int ps)
     float us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
     debug_log("Ug=%.3fV Ud=%.3fV Us=%.3fV\n", ug, ud, us);
     float id = (5.0f - ud) / (680.0f + calibration.rp);
-    result.ic_mA = id * 1e3f;
+    result.current_mA = id * 1e3f;
     result.resistance = (ud - us) / id;
     if ((ug > 0.5f) || (ud > 0.5f))
     {
@@ -67,7 +67,7 @@ static bool dmos_probe(unsigned int pg, unsigned int pd, unsigned int ps)
         debug_log("bad Us-Ud\n");
         return false;
     }
-    if (!(result.ic_mA * 0.95f > id))
+    if (!(result.current_mA * 0.95f > id))
     {
         debug_log("bad channel current\n");
         return false;
@@ -97,7 +97,7 @@ static bool dmos_probe(unsigned int pg, unsigned int pd, unsigned int ps)
     {
         return false;
     }
-    result.emos_uth = us;
+    result.dmos_ugs = us;
 
     probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
     probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
@@ -110,9 +110,9 @@ static bool dmos_probe(unsigned int pg, unsigned int pd, unsigned int ps)
     probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     is = us / calibration.rd;
-    if (6.0f < result.ic_mA)
+    if (6.0f < result.current_mA)
     {
-        result.ic_mA = is * 1e3f;
+        result.current_mA = is * 1e3f;
         result.resistance = (ud - us) / is;
     }
 

@@ -32,7 +32,7 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
         debug_log("Bad Id\n");
         return false;
     }
-    result.ic_mA = id;
+    result.current_mA = id;
 
     /* positive Ugs -> check for diode voltage drop */
     probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
@@ -72,7 +72,7 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
         debug_log("Bad Ug\n");
         return false;
     }
-    if ((is < 0.1f) || (is > result.ic_mA * 2.0f))
+    if ((is < 0.1f) || (is > result.current_mA * 2.0f))
     {
         debug_log("Bad Is\n");
         return false;
@@ -111,9 +111,9 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
     probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
 
-    if (6.0f < result.ic_mA)
+    if (6.0f < result.current_mA)
     {
-        result.ic_mA = us / calibration.rd * 1e3f;
+        result.current_mA = us / calibration.rd * 1e3f;
     }
 
     probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
@@ -171,7 +171,7 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
         debug_log("Bad Id\n");
         return false;
     }
-    result.ic_mA = id;
+    result.current_mA = id;
 
     probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
     probe_configure(pd, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
@@ -248,9 +248,9 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
     probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
 
-    if (6.0f < result.ic_mA)
+    if (6.0f < result.current_mA)
     {
-        result.ic_mA = ud / calibration.rd * 1e3f;
+        result.current_mA = ud / calibration.rd * 1e3f;
     }
 
     probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);

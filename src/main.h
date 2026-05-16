@@ -24,14 +24,11 @@ typedef struct
     {
         float bjt_ube;
         float emos_uth;
+        float dmos_ugs;
         float jfet_ug;
+        float thy_ug;
     };
-    union
-    {
-        float ic_mA;
-        float diode_ir_mA;
-        float ir_0;
-    };
+    float current_mA;
     float cap_vloss;
     float temperature;
     float humidity;

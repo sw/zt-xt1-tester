@@ -37,7 +37,7 @@ bool diode(void)
             return false;
         }
         result.diode_vf_a[i] = result.diode_vf;
-        ir[i] = result.diode_ir_mA;
+        ir[i] = result.current_mA;
 
         if (result.diode_vf < 0.18f)
         {
@@ -63,7 +63,7 @@ bool diode(void)
     {
         result.component = COMPONENT_DIODE;
         result.diode_vf = result.diode_vf_a[max_idx];
-        result.diode_ir_mA = ir[max_idx];
+        result.current_mA = ir[max_idx];
         cap_small(probes[max_idx][0], probes[max_idx][1], probes[max_idx][2], true);
         if (result.capacitance_pF > 999.0f)
         {
@@ -72,7 +72,7 @@ bool diode(void)
         result.probes[0] = probes[max_idx][0];
         result.probes[1] = probes[max_idx][1];
         debug_log("diode Uf=%.2f Ir=%.1fmA C=%.1fpF probes:%u %u\n",
-            result.diode_vf, result.diode_ir_mA, result.capacitance_pF, result.probes[0], result.probes[1]);
+            result.diode_vf, result.current_mA, result.capacitance_pF, result.probes[0], result.probes[1]);
         return true;
     }
     else if (num != 2)
@@ -125,6 +125,6 @@ void diode_forward_reverse(unsigned int pa, unsigned int pk)
     tim6_usleep(100); /* not in original firmware, required for simulation */
 #endif
     uk = adc_average(channels[pk], 1000) * (5.0f / 4095.0f);
-    result.diode_ir_mA = (5.0f - uk) / 470.0f;
-    debug_log("Ir = (5V - %.3fV) / 470kohm = %.2fuA\n", uk, result.diode_ir_mA * 1000.0f);
+    result.current_mA = (5.0f - uk) / 470.0f;
+    debug_log("Ir = (5V - %.3fV) / 470kohm = %.2fuA\n", uk, result.current_mA * 1e3f);
 }

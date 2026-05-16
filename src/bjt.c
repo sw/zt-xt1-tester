@@ -49,9 +49,9 @@ static bool bjt_npn(unsigned int pb, unsigned int pc, unsigned int pe)
     probe_configure(pe, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     tim6_msleep(1);
     uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
-    result.ic_mA = (5.0f - uc) / (470e3f + calibration.rd) * 1e3f;
-    debug_log("Ic = (5V - %.3fV) / (470kohm + %.0fohm) = %.1fuA\n", uc, calibration.rd, result.ic_mA * 1e3f);
-    if ((result.ic_mA > 0.5f) || (uc < 4.5f))
+    result.current_mA = (5.0f - uc) / (470e3f + calibration.rd) * 1e3f;
+    debug_log("Ic = (5V - %.3fV) / (470kohm + %.0fohm) = %.1fuA\n", uc, calibration.rd, result.current_mA * 1e3f);
+    if ((result.current_mA > 0.5f) || (uc < 4.5f))
     {
         debug_log("bad Ic or Uc\n");
         return false;
@@ -132,9 +132,9 @@ static bool bjt_pnp(unsigned int pb, unsigned int pc, unsigned int pe)
     tim6_usleep(50); /* not in original firmware, required for simulation */
 #endif
     uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
-    result.ic_mA = uc / (470e3f + calibration.rd) * 1e3f;
-    debug_log("Ic = %.3fV / (470kohm + %.0fohm) = %.1fuA\n", uc, calibration.rd, result.ic_mA * 1e3f);
-    if ((result.ic_mA > 0.5f) || (uc > 0.5f))
+    result.current_mA = uc / (470e3f + calibration.rd) * 1e3f;
+    debug_log("Ic = %.3fV / (470kohm + %.0fohm) = %.1fuA\n", uc, calibration.rd, result.current_mA * 1e3f);
+    if ((result.current_mA > 0.5f) || (uc > 0.5f))
     {
         debug_log("bad Ic or Uc\n");
         return false;

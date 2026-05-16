@@ -47,7 +47,7 @@ static bool thy_triac_probe(unsigned int p0, unsigned int p1, unsigned int pg)
         debug_log("Bad U2\n");
         return false;
     }
-    result.bjt_ube = ug - u0;
+    result.thy_ug = ug - u0;
 
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);

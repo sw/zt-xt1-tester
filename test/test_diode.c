@@ -47,7 +47,7 @@ static void test_single(void **state)
         assert_float_equal(result_p->diode_vf, 0.68f, 0.01f);
 
         /* TODO: original firmware has no delay in diode_forward_reverse, measures higher reverse current */
-        assert_float_in_range(result_p->diode_ir_mA, 0.0f, 0.1f, 0.0f);
+        assert_float_in_range(result_p->current_mA, 0.0f, 0.1f, 0.0f);
         assert_float_in_range(result_p->capacitance_pF, 20.0f, 33.0f, 0.0f);
 
         assert_uint_equal(result_p->probes[0], probes[i][0]);

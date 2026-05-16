@@ -54,9 +54,9 @@ static bool darlington_npn(unsigned int pb, unsigned int pc, unsigned int pe)
     uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
     adc_average(channels[pe], 100);
     /* shouldn't we use rd? */
-    result.ic_mA = (5.0f - uc) / (680.0f + calibration.rp) * 1e3f;
-    debug_log("Ic = (5V - %.3fV) / (680ohm + %.0fohm) = %.1fuA\n", uc, calibration.rp, result.ic_mA * 1e3f);
-    if (result.ic_mA > 0.1f)
+    result.current_mA = (5.0f - uc) / (680.0f + calibration.rp) * 1e3f;
+    debug_log("Ic = (5V - %.3fV) / (680ohm + %.0fohm) = %.1fuA\n", uc, calibration.rp, result.current_mA * 1e3f);
+    if (result.current_mA > 0.1f)
     {
         debug_log("bad Ic\n");
         return false;
@@ -114,9 +114,9 @@ static bool darlington_pnp(unsigned int pb, unsigned int pc, unsigned int pe)
     adc_average(channels[pb], 100);
     uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
     adc_average(channels[pe], 100);
-    result.ic_mA = uc / (680.0f + calibration.rd) * 1e3f;
-    debug_log("Ic = %.3fV / (680ohm + %.0fohm) = %.1fuA\n", uc, calibration.rd, result.ic_mA * 1e3f);
-    if (result.ic_mA > 0.1f)
+    result.current_mA = uc / (680.0f + calibration.rd) * 1e3f;
+    debug_log("Ic = %.3fV / (680ohm + %.0fohm) = %.1fuA\n", uc, calibration.rd, result.current_mA * 1e3f);
+    if (result.current_mA > 0.1f)
     {
         debug_log("bad Ic\n");
         return false;

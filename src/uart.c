@@ -57,9 +57,9 @@ void uart_init(void)
     DMA_EnableChannel(DMA_CH5, ENABLE);
 
     /* send version info */
-    uart_frame_tx.payload[0] = 3;   /* patch */
-    uart_frame_tx.payload[1] = 1;   /* minor */
-    uart_frame_tx.payload[2] = 1;   /* major */
+    uart_frame_tx.payload[0] = 0;   /* patch */
+    uart_frame_tx.payload[1] = 0;   /* minor */
+    uart_frame_tx.payload[2] = 0;   /* major */
     uart_frame_tx.payload[3] = 0;   /* unknown */
     uart_send(6, 4);
 }
