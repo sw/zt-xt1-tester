@@ -151,7 +151,12 @@ SECTIONS
     . = ALIGN(8);
   } >RAM
 
-  
+  /* fill with 0xFF to multiple of 128 (needed for simpler handling in main firmware) */
+  .fill :
+  {
+    BYTE(0xFF) /* need something in the section so it doesn't get optimized away */
+    . = ALIGN(128);
+  } >FLASH =0xFF
 
   /* Remove information from the standard libraries */
   /DISCARD/ :
