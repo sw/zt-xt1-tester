@@ -1,6 +1,7 @@
 {
     "clangd.arguments": [
         "--compile-commands-dir=${command:cmake.buildDirectory}",
+        "--header-insertion=never",
         "--query-driver=/usr/bin/arm-none-eabi-gcc,/usr/bin/cc"
     ],
     "cmake.ctest.allowParallelJobs": true,

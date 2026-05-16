@@ -1,6 +1,10 @@
 {
     "buildPresets": [
         {
+            "configurePreset": "Release",
+            "name": "Release"
+        },
+        {
             "configurePreset": "Test",
             "name": "Test"
         }
@@ -43,6 +47,19 @@
     ],
     "version": 6,
     "workflowPresets": [
+        {
+            "name": "Release",
+            "steps": [
+                {
+                    "name": "Release",
+                    "type": "configure"
+                },
+                {
+                    "name": "Release",
+                    "type": "build"
+                }
+            ]
+        },
         {
             "name": "Test",
             "steps": [
