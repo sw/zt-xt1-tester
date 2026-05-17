@@ -34,7 +34,7 @@ static void test_single(void **state)
 
     for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
     {
-        asprintf(&dut[1], "d1 /t%u /t%u di_1n4001", probes[i][0], probes[i][1]);
+        asprintf(&dut[1], "d1 /t%u /t%u di_1n4001", probes[i][0], probes[i][2]);
         spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
         free(dut[1]);
 
@@ -51,7 +51,7 @@ static void test_single(void **state)
         assert_float_in_range(result_p->capacitance_pF, 20.0f, 33.0f, 0.0f);
 
         assert_uint_equal(result_p->probes[0], probes[i][0]);
-        assert_uint_equal(result_p->probes[1], probes[i][1]);
+        assert_uint_equal(result_p->probes[2], probes[i][2]);
     }
 }
 

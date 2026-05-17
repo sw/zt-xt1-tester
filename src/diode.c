@@ -70,9 +70,9 @@ bool diode(void)
             result.capacitance_pF = 0.0f;
         }
         result.probes[0] = probes[max_idx][0];
-        result.probes[1] = probes[max_idx][1];
+        result.probes[2] = probes[max_idx][1];
         debug_log("diode Uf=%.2f Ir=%.1fmA C=%.1fpF probes:%u %u\n",
-            result.diode_vf, result.current_mA, result.capacitance_pF, result.probes[0], result.probes[1]);
+            result.diode_vf, result.current_mA, result.capacitance_pF, result.probes[0], result.probes[2]);
         return true;
     }
     else if (num != 2)

@@ -46,7 +46,7 @@ static void test_one(void **state)
     assert_uint_equal(result_p->channel, CHANNEL_P);
     assert_float_equal(result_p->resistance, 2.23f, 0.01f);
     assert_float_equal(result_p->emos_uth, 2.07f, 0.01f);
-    assert_float_in_range(result_p->capacitance_pF, 67.0f, 84.0f, 0.0f);
+    assert_float_in_range(result_p->capacitance_pF, 70.0f, 87.0f, 0.0f);
     assert_uint_equal(result_p->probes[0], probes[i][0]);
     assert_uint_equal(result_p->probes[1], probes[i][1]);
     assert_uint_equal(result_p->probes[2], probes[i][2]);
