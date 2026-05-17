@@ -30,7 +30,6 @@ static bool igbt_probe(unsigned int pg, unsigned int pc, unsigned int pe)
 #endif
     float ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
     float uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
-    adc_average(channels[pe], 100); /* result thrown away */
     debug_log("Ug=%.3fV Uc=%.3fV\n", ug, uc);
     if ((ug < 4.9f) || (uc > 1.2f))
     {
@@ -41,12 +40,9 @@ static bool igbt_probe(unsigned int pg, unsigned int pc, unsigned int pe)
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
     probe_configure(pe, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-#ifndef __ARM_EABI__
-    tim6_usleep(500); /* not in original firmware, required for simulation */
-#endif
+    tim6_msleep(10);
     ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
     uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
-    adc_average(channels[pe], 100); /* result thrown away */
     debug_log("Ug=%.3fV Uc=%.3fV\n", ug, uc);
     if ((ug > 0.1f) || (uc < 4.5f))
     {
@@ -61,7 +57,6 @@ static bool igbt_probe(unsigned int pg, unsigned int pc, unsigned int pe)
     tim6_usleep(500); /* not in original firmware, required for simulation */
 #endif
     ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
-    adc_average(channels[pc], 100); /* result thrown away */
     float ue = adc_average(channels[pe], 100) * (5.0f / 4095.0f);
     debug_log("Ug=%.3fV Ue=%.3fV\n", ug, ue);
     result.emos_uth = ug - ue;
