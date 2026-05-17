@@ -122,6 +122,12 @@ void COMP_IRQHandler(void)
     EXTI_ClrITPendBit(EXTI_LINE18);
 }
 
+void TIM3_IRQHandler(void)
+{
+    tim3_expiry++;
+    TIM_ClrIntPendingBit(TIM3, TIM_INT_UPDATE);
+}
+
 /**
  * @}
  */

@@ -21,15 +21,14 @@ void adc_init(void)
     ADC_Init(ADC, &ADC_InitStruct);
     ADC_EnableVrefint(ENABLE);
     ADC_Enable(ADC, ENABLE);
-    /* TODO: ADC_GetFlagStatus_diff ??? */
     do {
-        flag = ADC_GetFlagStatus(ADC, ADC_FLAG_ENDC_ANY);
+        flag = ADC_GetFlagStatusNew(ADC, ADC_FLAG_RDY);
     } while (flag == RESET);
     do {
-        flag = ADC_GetFlagStatus(ADC, ADC_FLAG_JENDC_ANY);
+        flag = ADC_GetFlagStatusNew(ADC, ADC_FLAG_PD_RDY);
     } while (flag != RESET);
     do {
-        flag = ADC_GetFlagStatus(ADC, ADC_FLAG_JENDC);
+        flag = ADC_GetFlagStatusNew(ADC, ADC_FLAG_VREF_RDY);
     } while (flag == RESET);
     ADC_EnableSoftwareStartConv(ADC, ENABLE);
 

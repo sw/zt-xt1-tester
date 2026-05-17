@@ -5,10 +5,10 @@
             "executable": "${command:cmake.launchTargetPath}",
             "interface": "swd",
             "name": "Launch PyOCD",
+            "overrideGDBServerStartedRegex": "GDB server listening on port",
             "request": "launch",
             "runToEntryPoint": "main",
             "servertype": "pyocd",
-            "showDevDebugOutput": "raw",
             "svdFile": "svd/N32G031.svd",
             "targetId": "n32g031c8",
             "type": "cortex-debug"

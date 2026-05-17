@@ -40,7 +40,7 @@ void uart_init(void)
 
     DMA_DeInit(DMA_CH5);
     DMA_StructInit(&DMA_InitParam);
-    DMA_InitParam.PeriphAddr = USART1->DAT;
+    DMA_InitParam.PeriphAddr = (uint32_t)&USART1->DAT;
     DMA_InitParam.MemAddr = (uint32_t)&uart_frame_rx;
     DMA_InitParam.BufSize = sizeof(uart_frame_rx_t);
     DMA_InitParam.DMA_MemoryInc = DMA_MEM_INC_ENABLE;
