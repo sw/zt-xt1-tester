@@ -65,7 +65,7 @@ void ir_read(void)
     {
         return;
     }
-    if (GPIO_ReadOutputDataBit(GPIOA, direct_pins[result.probes[0]]))
+    if (GPIO_ReadInputDataBit(GPIOA, direct_pins[result.probes[0]]))
     {
         return; /* output high = idle -> loop in main */
     }
@@ -74,7 +74,7 @@ void ir_read(void)
     memset(&buf, 0, sizeof(buf));
 
     /* leading pulse: 9ms */
-    while (!GPIO_ReadOutputDataBit(GPIOA, direct_pins[result.probes[0]]))
+    while (!GPIO_ReadInputDataBit(GPIOA, direct_pins[result.probes[0]]))
     {
         if (TIM6->CNT > 10000)
         {
@@ -84,7 +84,7 @@ void ir_read(void)
 
     /* space: 4.5ms */
     TIM6->CNT = 0;
-    while (GPIO_ReadOutputDataBit(GPIOA, direct_pins[result.probes[0]]))
+    while (GPIO_ReadInputDataBit(GPIOA, direct_pins[result.probes[0]]))
     {
         if (TIM6->CNT > 5000)
         {
@@ -96,7 +96,7 @@ void ir_read(void)
     TIM6->CNT = 0;
     for (int i = 0; i < 32; i++)
     {
-        while (!GPIO_ReadOutputDataBit(GPIOA, direct_pins[result.probes[0]]))
+        while (!GPIO_ReadInputDataBit(GPIOA, direct_pins[result.probes[0]]))
         {
             if (TIM6->CNT > 2000)
             {
@@ -105,7 +105,7 @@ void ir_read(void)
         }
         buf.pulse_duration[i * 2] = TIM6->CNT;
         TIM6->CNT = 0;
-        while (GPIO_ReadOutputDataBit(GPIOA, direct_pins[result.probes[0]]))
+        while (GPIO_ReadInputDataBit(GPIOA, direct_pins[result.probes[0]]))
         {
             if (TIM6->CNT > 2000)
             {

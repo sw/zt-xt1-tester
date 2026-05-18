@@ -26,7 +26,7 @@ bool dht11_detect(void)
         probe_configure(result.probes[0], PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
         probe_configure(result.probes[1], PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
         probe_configure(result.probes[2], PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-        tim6_msleep(1);
+        tim6_msleep(10);
         uint_fast16_t a0 = adc_average(channels[result.probes[0]], 1);
         uint_fast16_t a1 = adc_average(channels[result.probes[1]], 1);
         uint_fast16_t a2 = adc_average(channels[result.probes[2]], 1);
@@ -67,7 +67,7 @@ bool dht11_read(void)
 
     /* wait for response: DHT pulls line low */
     TIM6->CNT = 0;
-    while (GPIO_ReadOutputDataBit(GPIOA, direct_pin))
+    while (GPIO_ReadInputDataBit(GPIOA, direct_pin))
     {
         if (TIM6->CNT > 100)
         {
@@ -76,7 +76,7 @@ bool dht11_read(void)
     }
 
     TIM6->CNT = 0;
-    while (!GPIO_ReadOutputDataBit(GPIOA, direct_pin))
+    while (!GPIO_ReadInputDataBit(GPIOA, direct_pin))
     {
         if (TIM6->CNT > 100)
         {
@@ -85,7 +85,7 @@ bool dht11_read(void)
     }
 
     TIM6->CNT = 0;
-    while (GPIO_ReadOutputDataBit(GPIOA, direct_pin))
+    while (GPIO_ReadInputDataBit(GPIOA, direct_pin))
     {
         if (TIM6->CNT > 100)
         {
@@ -96,7 +96,7 @@ bool dht11_read(void)
     TIM6->CNT = 0;
     for (int i = 0; i < 40; i++)
     {
-        while (!GPIO_ReadOutputDataBit(GPIOA, direct_pin))
+        while (!GPIO_ReadInputDataBit(GPIOA, direct_pin))
         {
             if (TIM6->CNT > 100)
             {
@@ -104,7 +104,7 @@ bool dht11_read(void)
             }
         }
         TIM6->CNT = 0;
-        while (GPIO_ReadOutputDataBit(GPIOA, direct_pin))
+        while (GPIO_ReadInputDataBit(GPIOA, direct_pin))
         {
             if (TIM6->CNT > 100)
             {

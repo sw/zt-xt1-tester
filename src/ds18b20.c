@@ -28,12 +28,12 @@ static bool ds18b20_init(void)
 
     /* look for DS18B20 presence pulse */
     tim6_usleep(60);
-    if (!GPIO_ReadOutputDataBit(GPIOA, direct_pin))
+    if (!GPIO_ReadInputDataBit(GPIOA, direct_pin))
     {
         TIM6->CNT = 0;
         do
         {
-            if (GPIO_ReadOutputDataBit(GPIOA, direct_pin))
+            if (GPIO_ReadInputDataBit(GPIOA, direct_pin))
             {
                 tim6_usleep(500);
                 return true;
@@ -84,7 +84,7 @@ static uint_fast8_t ds18b20_read_byte(void)
         tim6_usleep(5);
         GPIO_WriteBit(GPIOA, r680_pin, Bit_SET);
         tim6_usleep(5);
-        if (GPIO_ReadOutputDataBit(GPIOA, direct_pin))
+        if (GPIO_ReadInputDataBit(GPIOA, direct_pin))
         {
             byte |= 0x80;
         }
