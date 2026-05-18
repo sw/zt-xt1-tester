@@ -1,9 +1,8 @@
 #include "main.h"
-#include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 #include "adc.h"
 #include "calib.h"
+#include "component.h"
 #include "globals.h"
 #include "helpers.h"
 #include "timer.h"

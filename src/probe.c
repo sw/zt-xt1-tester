@@ -1,5 +1,6 @@
 #include <math.h>
 #include "adc.h"
+#include "component.h"
 #include "debug.h"
 #include "globals.h"
 #include "helpers.h"

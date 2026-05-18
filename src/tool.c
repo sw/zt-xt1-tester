@@ -1,5 +1,6 @@
 #include <string.h>
 #include "calib.h"
+#include "component.h"
 #include "globals.h"
 #include "probe.h"
 #include "tool.h"

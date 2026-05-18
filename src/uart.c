@@ -42,7 +42,7 @@ void uart_init(void)
     DMA_StructInit(&DMA_InitParam);
     DMA_InitParam.PeriphAddr = (uint32_t)&USART1->DAT;
     DMA_InitParam.MemAddr = (uint32_t)&uart_frame_rx;
-    DMA_InitParam.BufSize = sizeof(uart_frame_rx_t);
+    DMA_InitParam.BufSize = sizeof(tester_uart_frame_t);
     DMA_InitParam.DMA_MemoryInc = DMA_MEM_INC_ENABLE;
     DMA_InitParam.PeriphInc = DMA_PERIPH_INC_DISABLE;
     DMA_InitParam.Direction = DMA_DIR_PERIPH_SRC;
@@ -66,7 +66,7 @@ void uart_init(void)
 
 void uart_rx_rearm(void)
 {
-    DMA_SetCurrDataCounter(DMA_CH5, sizeof(uart_frame_rx_t));
+    DMA_SetCurrDataCounter(DMA_CH5, sizeof(tester_uart_frame_t));
     DMA_EnableChannel(DMA_CH5, ENABLE);
 }
 
@@ -80,7 +80,7 @@ void uart_send(uint_fast8_t id, size_t length)
     {
         uart_frame_tx.checksum += uart_frame_tx.payload[i];
     }
-    for (size_t i = 0; i < offsetof(uart_frame_tx_t, payload) + length; i++)
+    for (size_t i = 0; i < offsetof(tester_uart_frame_t, payload) + length; i++)
     {
         while (USART_GetFlagStatus(USART1, USART_FLAG_TXDE) == RESET) { }
         USART_SendData(USART1, uart_frame_tx.raw[i]);

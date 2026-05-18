@@ -38,7 +38,7 @@ void mock_uart(uint_fast8_t id, uint_fast8_t counter, size_t length, void *data)
     uart_frame_rx.counter = counter;
     memcpy(uart_frame_rx.payload, data, length);
     uart_rx_pending = true;
-    uart_rx_len = offsetof(uart_frame_rx_t, payload) + length;
+    uart_rx_len = offsetof(tester_uart_frame_t, payload) + length;
 }
 
 void mock_second_elapsed(void)

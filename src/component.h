@@ -1,44 +1,6 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stdint.h>
-
-typedef enum : uint8_t
-{
-    COMPONENT_NONE       =  0,
-    COMPONENT_TESTING    =  1,
-    COMPONENT_JFET       =  2,
-    COMPONENT_DMOS       =  3,
-    COMPONENT_BJT        =  4,
-    COMPONENT_DARLINGTON =  5,
-    COMPONENT_UJT        =  6,
-    COMPONENT_EMOS       =  7,
-    COMPONENT_IGBT       =  8,
-    COMPONENT_THYRISTOR  =  9,
-    COMPONENT_TRIAC      = 10,
-    COMPONENT_DIODE      = 11,
-    COMPONENT_2DIODE     = 12,
-    COMPONENT_BATTERY    = 13,
-    COMPONENT_CAP        = 14,
-    COMPONENT_RESISTOR   = 15,
-    COMPONENT_INDUCTOR   = 16,
-    COMPONENT_ZENER      = 17,
-    COMPONENT_INFRARED   = 18,
-    COMPONENT_DS18B20    = 19,
-    COMPONENT_DHT11      = 20,
-} component_t;
-
-typedef enum : uint8_t
-{
-    JUNCTION_NPN = 1,
-    JUNCTION_PNP = 2,
-} junction_t;
-
-typedef enum : uint8_t
-{
-    CHANNEL_N = 1,
-    CHANNEL_P = 2,
-} channel_t;
 
 void component_do_all(void);
 

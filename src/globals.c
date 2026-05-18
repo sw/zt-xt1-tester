@@ -4,8 +4,8 @@ calibration_t calibration;
 uint_least8_t calib_timeout;
 calib_step_t  calib_step;
 
-uart_frame_rx_t uart_frame_rx;
-uart_frame_tx_t uart_frame_tx;
+tester_uart_frame_t uart_frame_rx;
+tester_uart_frame_t uart_frame_tx;
 volatile uint32_t uart_rx_len;
 volatile bool uart_rx_pending;
 
@@ -14,7 +14,7 @@ uint8_t zener_enabled;
 
 bool ir_decoded;
 
-result_t result;
+tester_result_t result;
 
 uint_fast8_t adc_sampletime;
 volatile uint32_t mainloop_seconds;

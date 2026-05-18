@@ -1,14 +1,13 @@
 #include <cmocka.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include "calib.h"
-#include "component.h"
 #include "helpers.h"
+#include "interface.h"
 #include "main.h"
 #include "spice.h"
 
 extern uint8_t uart_received[];
-static const result_t *const result_p = (result_t *)uart_received;
+static const tester_result_t *const result_p = (tester_result_t *)uart_received;
 
 static const unsigned int probes[][3] =
 {
