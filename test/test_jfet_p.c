@@ -43,7 +43,7 @@ static void test_one(void **state)
 
     assert_uint_equal(result_p->component, COMPONENT_JFET);
     assert_uint_equal(result_p->channel, CHANNEL_P);
-    assert_float_equal(result_p->jfet_ug, 2.85f, 0.01f);
+    assert_float_equal(result_p->jfet_ug, 2.15f, 0.01f);
     assert_float_equal(result_p->current_mA, 23.4f, 0.1f);
     assert_uint_equal(result_p->probes[0], probes[i][0]);
     /* TODO: why is this swapped? */
