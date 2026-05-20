@@ -70,7 +70,7 @@ int main(void)
     tim3_init();
 
     /* load calibration data, initialize if not valid */
-    if (calib_load())
+    if (!calib_load())
     {
         calib_default();
         calib_write();
