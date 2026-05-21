@@ -1,6 +1,6 @@
 #include "n32g031_adc.h"
 #include "n32g031_opamp.h"
-#include "globals.h"
+#include "debug.h"
 #include "gpio.h"
 
 void adc_init(void)
@@ -46,7 +46,7 @@ uint_fast16_t adc_single(uint_fast8_t channel)
     #define CTRL2_EXT_TRIG_SWSTART_SET   ((uint32_t)0x00500000)
 
     /* original firmware sets SAMPT2 to zero, but that is for channels 8 to 15 */
-    ADC->SAMPT2 = 0;
+    ADC->SAMPT3 = 0;
     ADC->RSEQ3 = channel;
 
     /* erratum 5.2? throw away first conversion result */
@@ -67,7 +67,7 @@ uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
     uint_fast32_t sum = 0;
     assert(num < UINT_FAST32_MAX / 0xFFF);
 
-    ADC_ConfigRegularChannel(ADC, channel, 1, adc_sampletime);
+    ADC_ConfigRegularChannel(ADC, channel, 1, ADC_SAMP_TIME_600CYCLES5);
 
     /* erratum 5.2? throw away first conversion result */
     ADC_EnableSoftwareStartConv(ADC, ENABLE);

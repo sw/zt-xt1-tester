@@ -293,47 +293,43 @@ static void cap_esr(unsigned int p0, unsigned int p1, bool discharge)
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     tim6_msleep(100);
-    float r;
+
     /* original firmware does this 10 times but throws away the first 9 results */
-    //for (int i = 0; i < 10; i++)
+    int_fast32_t u0_sum = 0;
+    int_fast32_t u1_sum = 0;
+    for (int j = 0; j < 500; j++)
     {
-        int_fast32_t u0_sum = 0;
-        int_fast32_t u1_sum = 0;
-        for (int j = 0; j < 500; j++)
-        {
-            iwdg_reload();
-            probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-            probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-            /* 78us until p1 goes hi-Z */
+        iwdg_reload();
+        probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+        probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+        /* 78us until p1 goes hi-Z */
 #ifndef __ARM_EABI__
-            tim6_usleep(30);    /* adjust simulation timing to original firmware */
+        tim6_usleep(30);    /* adjust simulation timing to original firmware */
 #endif
-            u1_sum += adc_single(channels[p1]);
+        u1_sum += adc_single(channels[p1]);
 #ifndef __ARM_EABI__
-            tim6_usleep(30);    /* adjust simulation timing to original firmware */
+        tim6_usleep(30);    /* adjust simulation timing to original firmware */
 #endif
-            u0_sum += adc_single(channels[p0]);
-            tim6_usleep(4
+        u0_sum += adc_single(channels[p0]);
+        tim6_usleep(4
 #ifndef __ARM_EABI__
-                + 18   /* adjust simulation timing to original firmware */
+            + 18   /* adjust simulation timing to original firmware */
 #endif
-            );
-            probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+        );
+        probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
 #ifndef __ARM_EABI__
-            tim6_usleep(43);    /* adjust simulation timing to original firmware */
+        tim6_usleep(43);    /* adjust simulation timing to original firmware */
 #endif
-            adc_single(channels[p1]); /* result thrown away */
-            probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-            tim6_usleep(990
+        adc_single(channels[p1]); /* result thrown away */
+        probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+        tim6_usleep(990
 #ifndef __ARM_EABI__
-                + 90            /* adjust simulation timing to original firmware */
+            + 90            /* adjust simulation timing to original firmware */
 #endif
-            );
-        }
-        r = (u1_sum - u0_sum) * (30.0f / 1.05f * 0.125f) / u0_sum;
+        );
     }
-    debug_log("ESR=%.3f\n", r);
-    result.resistance = r;
+    result.resistance = (u1_sum - u0_sum) * (30.0f / 1.05f * 0.125f) / u0_sum;
+    debug_log("ESR=%.3f\n", result.resistance);
 }
 
 static void cap_vloss(unsigned int p0, unsigned int p1)

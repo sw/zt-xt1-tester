@@ -21,7 +21,6 @@ extern bool ir_decoded;
 
 extern tester_result_t result;
 
-extern uint_fast8_t adc_sampletime;
 extern volatile uint32_t mainloop_seconds;
 extern volatile uint32_t mainloop_centiseconds;
 

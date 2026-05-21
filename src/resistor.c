@@ -44,12 +44,6 @@ bool resistor(void)
         }
     }
 
-    /* the original firmware has this monstrous compiler optimization */
-    assert(UINT32_C(0x0FA51F7B) == ~*(uint32_t *)(float []){1100.0f} + *(uint32_t *)(float []){3e12f});
-    assert(UINT32_C(0xBB767FFF) == ~*(uint32_t *)(float []){1100.0f});
-    assert((UINT32_C(0x0FA51F7B) <= *(uint32_t *)&result.capacitance_pF + UINT32_C(0xBB767FFF))
-        == ((result.capacitance_pF < 1100.0f) || (result.capacitance_pF > 3e12f)));
-
     if ((result.capacitance_pF > 1100.0f) && (result.capacitance_pF < 3e12f))
     {
         return false;
@@ -74,7 +68,6 @@ void resistor_measure(int a, int b, int param)
     static const unsigned int channels[3] = {1, 3, 7};
     float aa, ab;
 
-    adc_sampletime = 14; /* ADC_SAMP_TIME_480CYCLES5 */
     switch (param)
     {
         case 0:
@@ -129,7 +122,6 @@ void resistor_measure(int a, int b, int param)
             debug_log("measure 3 probes:%u %u adc=%.0f %.0f R=%.0f\n", a, b, aa, ab, result.resistance);
             break;
     }
-    adc_sampletime = 5; /* ADC_SAMP_TIME_42CYCLES5 */
 }
 
 bool resistor_tool(void)

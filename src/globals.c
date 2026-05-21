@@ -16,7 +16,6 @@ bool ir_decoded;
 
 tester_result_t result;
 
-uint_fast8_t adc_sampletime;
 volatile uint32_t mainloop_seconds;
 volatile uint32_t mainloop_centiseconds;
 
