@@ -36,7 +36,7 @@ static bool ujt_probe(unsigned int pe, unsigned int p1, unsigned int p2)
     u1 = adc_average(channels[p1], 100) * (5.0f / 4095.0f);
     u2 = adc_average(channels[p2], 100) * (5.0f / 4095.0f);
     debug_log("U1=%.3fV U2=%.3fV\n", u1, u2);
-    float rbb = (u2 - u1) / u1 * (680.0f + calibration.rd);
+    float rbb = (u2 - u1) / u1 * (680.0f + self_adjust_vals.rd);
     if ((rbb < 200.0f) || (rbb > 100000.0f))
     {
         debug_log("Bad Rbb\n");
@@ -53,7 +53,7 @@ static bool ujt_probe(unsigned int pe, unsigned int p1, unsigned int p2)
     u1 = adc_average(channels[p1], 100) * (5.0f / 4095.0f);
     u2 = adc_average(channels[p2], 100) * (5.0f / 4095.0f);
     debug_log("Ue=%.3fV U1=%.3fV U2=%.3fV\n", ue, u1, u2);
-    float r2 = (u1 - u2) / u2 * (680.0f + calibration.rd);
+    float r2 = (u1 - u2) / u2 * (680.0f + self_adjust_vals.rd);
 
     if (   (r2 < rbb)
         && (20.0f < r2)
@@ -72,7 +72,7 @@ static bool ujt_probe(unsigned int pe, unsigned int p1, unsigned int p2)
         u2 = adc_average(channels[p2], 100) * (5.0f / 4095.0f);
         debug_log("Ue=%.3fV U1=%.3fV U2=%.3fV\n", ue, u1, u2);
 
-        float r3 = (u2 - u1) / u1 * (680.0f + calibration.rd);
+        float r3 = (u2 - u1) / u1 * (680.0f + self_adjust_vals.rd);
         if (   (r3 < rbb)
             && (20.0f < r3)
             && (0.3f < (ue - u2))

@@ -20,7 +20,7 @@ static bool dmos_probe(unsigned int pg, unsigned int pd, unsigned int ps)
     float ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
     float us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
     debug_log("Ug=%.3fV Ud=%.3fV Us=%.3fV\n", ug, ud, us);
-    float id = (5.0f - ud) / (680.0f + calibration.rp);
+    float id = (5.0f - ud) / (680.0f + self_adjust_vals.rp);
     result.current_mA = id * 1e3f;
     result.resistance = (ud - us) / id;
     if ((ug > 0.5f) || (ud > 0.5f))
@@ -55,7 +55,7 @@ static bool dmos_probe(unsigned int pg, unsigned int pd, unsigned int ps)
     ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
     us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
     debug_log("Ug=%.3fV Ud=%.3fV Us=%.3fV\n", ug, ud, us);
-    id = ud / (680.0f + calibration.rd) * 1e3f;
+    id = ud / (680.0f + self_adjust_vals.rd) * 1e3f;
     result.diode_vf = us - ud;
     if (ug > 0.7f)
     {
@@ -92,7 +92,7 @@ static bool dmos_probe(unsigned int pg, unsigned int pd, unsigned int ps)
     ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
     ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
     us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
-    float is = us / (680.0f + calibration.rd) * 1e3f;
+    float is = us / (680.0f + self_adjust_vals.rd) * 1e3f;
     if (0.5f < ug)
     {
         return false;
@@ -109,7 +109,7 @@ static bool dmos_probe(unsigned int pg, unsigned int pd, unsigned int ps)
     probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    is = us / calibration.rd;
+    is = us / self_adjust_vals.rd;
     if (6.0f < result.current_mA)
     {
         result.current_mA = is * 1e3f;

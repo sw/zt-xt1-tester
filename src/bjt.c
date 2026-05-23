@@ -35,7 +35,7 @@ static bool bjt_npn(uint_fast8_t pb, uint_fast8_t pc, uint_fast8_t pe)
     result.bjt_ube = Vfloat(ube);
 
     /* calculate hFE for common emitter circuit */
-    result.hfe = 470e3f / (680.0f + calibration.rp) * (Vcc - uc) / (Vcc - ub);
+    result.hfe = 470e3f / (680.0f + self_adjust_vals.rp) * (Vcc - uc) / (Vcc - ub);
     debug_log("hFE (common emitter) = %.1f\n", result.hfe);
 
     /* measure hFE in common collector circuit, first with low base resistor */
@@ -54,7 +54,7 @@ static bool bjt_npn(uint_fast8_t pb, uint_fast8_t pc, uint_fast8_t pe)
         tim6_msleep(5);
         ub = Vcc - ADC_MEASURE(channels[pb]);
         ue = ADC_MEASURE(channels[pe]);
-        hfe = 470e3f / (680.0f + calibration.rd) * ue / ub;
+        hfe = 470e3f / (680.0f + self_adjust_vals.rd) * ue / ub;
         debug_log("hFE (common collector, high base resistor) = %.1f\n", hfe);
     }
     result.hfe = fmaxf(result.hfe, hfe);
@@ -131,7 +131,7 @@ static bool bjt_pnp(uint_fast8_t pb, uint_fast8_t pc, uint_fast8_t pe)
     result.bjt_ube = Vfloat(ube);
 
     /* calculate hFE for common emitter circuit */
-    result.hfe = 470e3f / (680.0f + calibration.rd) * uc / ub;
+    result.hfe = 470e3f / (680.0f + self_adjust_vals.rd) * uc / ub;
     debug_log("hFE (common emitter) = %.1f\n", result.hfe);
 
     /* measure hFE in common collector circuit, first with low base resistor */
@@ -150,7 +150,7 @@ static bool bjt_pnp(uint_fast8_t pb, uint_fast8_t pc, uint_fast8_t pe)
         tim6_msleep(5);
         ub = ADC_MEASURE(channels[pb]);
         ue = Vcc - ADC_MEASURE(channels[pe]);
-        hfe = 470e3f / (680.0f + calibration.rp) * ue / ub;
+        hfe = 470e3f / (680.0f + self_adjust_vals.rp) * ue / ub;
         debug_log("hFE (common collector, high base resistor) = %.1f\n", hfe);
     }
     result.hfe = fmaxf(result.hfe, hfe);

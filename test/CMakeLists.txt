@@ -1,7 +1,6 @@
 set(TESTS
     test_bjt_npn.c
     test_bjt_pnp.c
-    test_calib.c
     test_cap.c
     test_darlington_npn.c
     test_darlington_pnp.c
@@ -14,6 +13,7 @@ set(TESTS
     test_jfet_p.c
     test_none.c
     test_resistor.c
+    test_self_adjust.c
     test_thyristor.c
     test_triac.c
     test_ujt.c

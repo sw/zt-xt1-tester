@@ -1,14 +1,14 @@
 #include <string.h>
-#include "calib.h"
 #include "component.h"
 #include "globals.h"
 #include "probe.h"
+#include "self_adjust.h"
 #include "tool.h"
 #include "uart.h"
 
 void tool_do(void)
 {
-    calib_timeout++;
+    self_adjust_timeout++;
 
     switch (tool)
     {
@@ -46,60 +46,62 @@ void tool_do(void)
 #endif
             break;
 
-        case TOOL_CALIBRATE:
-            switch (calib_step)
+        case TOOL_SELF_ADJUST:
+            switch (self_adjust_step)
             {
-                case CALIB_PROBES_CHECK_SHORTED:
+                case SELF_ADJUST_PROBES_CHECK_SHORTED:
                     if (probe_all_shorted())
                     {
-                        calib_step = CALIB_PROBES_RESISTANCE;
+                        self_adjust_step = SELF_ADJUST_PROBES_RESISTANCE;
                     }
-                    uart_frame_tx.payload[0] = calib_step;
-                    uart_send(8, 1);
-                    if (calib_timeout < 60)
+                    ((self_adjust_state_t *)uart_frame_tx.payload)->step = self_adjust_step;
+                    ((self_adjust_state_t *)uart_frame_tx.payload)->val  = self_adjust_vals;
+                    uart_send(8, sizeof(self_adjust_state_t));
+                    if (self_adjust_timeout < 60)
                     {
                         return;
                     }
                     /* timeout expired */
-                    calib_timeout = 0;
-                    calib_step = CALIB_TIMEOUT;
+                    self_adjust_timeout = 0;
+                    self_adjust_step = SELF_ADJUST_TIMEOUT;
                     break;
 
-                case CALIB_PROBES_RESISTANCE:
+                case SELF_ADJUST_PROBES_RESISTANCE:
                     probe_calibrate_resistance();
-                    calib_step = CALIB_PROBES_CHECK_OPEN;
+                    self_adjust_step = SELF_ADJUST_PROBES_CHECK_OPEN;
                     break;
 
-                case CALIB_PROBES_CHECK_OPEN:
+                case SELF_ADJUST_PROBES_CHECK_OPEN:
                     if (probe_all_open())
                     {
-                        calib_step = CALIB_PROBES_CAPACITANCE;
+                        self_adjust_step = SELF_ADJUST_PROBES_CAPACITANCE;
                     }
                     break;
 
-                case CALIB_PROBES_CAPACITANCE:
+                case SELF_ADJUST_PROBES_CAPACITANCE:
                     probe_calibrate_capacitance();
-                    calib_step = CALIB_STORE;
+                    self_adjust_step = SELF_ADJUST_STORE;
                     break;
 
-                case CALIB_STORE:
-                    calib_step = CALIB_IDLE;
-                    debug_log("Rp=%.2f\n", calibration.rp);
-                    debug_log("Rd=%.2f\n", calibration.rd);
-                    debug_log("Probe12_Cap=%.2f\n", calibration.probe12_cap);
-                    debug_log("Probe13_Cap=%.2f\n", calibration.probe13_cap);
-                    debug_log("Probe21_Cap=%.2f\n", calibration.probe21_cap);
-                    debug_log("Probe23_Cap=%.2f\n", calibration.probe23_cap);
-                    debug_log("Probe31_Cap=%.2f\n", calibration.probe31_cap);
-                    debug_log("Probe32_Cap=%.2f\n", calibration.probe32_cap);
-                    calib_write();
+                case SELF_ADJUST_STORE:
+                    self_adjust_step = SELF_ADJUST_IDLE;
+                    debug_log("Rp=%.2f\n", self_adjust_vals.rp);
+                    debug_log("Rd=%.2f\n", self_adjust_vals.rd);
+                    debug_log("Probe12_Cap=%.2f\n", self_adjust_vals.probe12_cap);
+                    debug_log("Probe13_Cap=%.2f\n", self_adjust_vals.probe13_cap);
+                    debug_log("Probe21_Cap=%.2f\n", self_adjust_vals.probe21_cap);
+                    debug_log("Probe23_Cap=%.2f\n", self_adjust_vals.probe23_cap);
+                    debug_log("Probe31_Cap=%.2f\n", self_adjust_vals.probe31_cap);
+                    debug_log("Probe32_Cap=%.2f\n", self_adjust_vals.probe32_cap);
+                    self_adjust_write();
                     return;
 
                 default:
                     return;
             }
-            uart_frame_tx.payload[0] = calib_step;
-            uart_send(8, 1);
+            ((self_adjust_state_t *)uart_frame_tx.payload)->step = self_adjust_step;
+            ((self_adjust_state_t *)uart_frame_tx.payload)->val  = self_adjust_vals;
+            uart_send(8, sizeof(self_adjust_state_t));
             return;
 
         default:

@@ -78,7 +78,7 @@ void resistor_measure(int a, int b, int param)
             aa = adc_average(channels[a], 1000);
             ab = adc_average(channels[b], 1000);
             /* why add Rp??? */
-            result.resistance = divf((ab - aa) * (calibration.rd + calibration.rp), aa);
+            result.resistance = divf((ab - aa) * (self_adjust_vals.rd + self_adjust_vals.rp), aa);
             debug_log("measure 0 probes:%u %u adc=%.0f %.0f R=%.0f\n", a, b, aa, ab, result.resistance);
             break;
 
@@ -101,7 +101,7 @@ void resistor_measure(int a, int b, int param)
             tim6_msleep(100);
             aa = adc_average(channels[a], 1000);
             ab = adc_average(channels[b], 1000);
-            result.resistance = divf((ab - aa) * (calibration.rd + 680.0f), aa);
+            result.resistance = divf((ab - aa) * (self_adjust_vals.rd + 680.0f), aa);
             debug_log("measure 2 probes:%u %u adc=%.0f %.0f R=%.0f\n", a, b, aa, ab, result.resistance);
             break;
 
@@ -118,7 +118,7 @@ void resistor_measure(int a, int b, int param)
             aa = uia;
 
             ab = adc_average(channels[b], 1000);
-            result.resistance = divf((ab - aa) * (calibration.rd + 470e3f), aa);
+            result.resistance = divf((ab - aa) * (self_adjust_vals.rd + 470e3f), aa);
             debug_log("measure 3 probes:%u %u adc=%.0f %.0f R=%.0f\n", a, b, aa, ab, result.resistance);
             break;
     }

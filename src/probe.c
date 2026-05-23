@@ -257,13 +257,13 @@ void probe_calibrate_resistance(void)
 
     if ((fabsf(rd) < 30.0f) && (fabsf(rp) < 30.0f))
     {
-        calibration.rp = rp;
-        calibration.rd = rd;
+        self_adjust_vals.rp = rp;
+        self_adjust_vals.rd = rd;
     }
     else
     {
-        calibration.rp = 15.0f;
-        calibration.rd = 15.0f;
+        self_adjust_vals.rp = 15.0f;
+        self_adjust_vals.rd = 15.0f;
     }
 }
 
@@ -314,17 +314,17 @@ void probe_calibrate_capacitance(void)
     tim6_usleep(100); /* not in original firmware, required for simulation */
 #endif
     cap_small(0, 1, 2, false);
-    calibration.probe12_cap = result.capacitance_pF;
+    self_adjust_vals.probe12_cap = result.capacitance_pF;
     cap_small(0, 2, 1, false);
-    calibration.probe13_cap = result.capacitance_pF;
+    self_adjust_vals.probe13_cap = result.capacitance_pF;
     cap_small(1, 0, 2, false);
-    calibration.probe21_cap = result.capacitance_pF;
+    self_adjust_vals.probe21_cap = result.capacitance_pF;
     cap_small(1, 2, 0, false);
-    calibration.probe23_cap = result.capacitance_pF;
+    self_adjust_vals.probe23_cap = result.capacitance_pF;
     cap_small(2, 0, 1, false);
-    calibration.probe31_cap = result.capacitance_pF;
+    self_adjust_vals.probe31_cap = result.capacitance_pF;
     cap_small(2, 1, 0, false);
-    calibration.probe32_cap = result.capacitance_pF;
+    self_adjust_vals.probe32_cap = result.capacitance_pF;
 
     probe_configure(0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);

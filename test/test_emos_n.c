@@ -1,9 +1,9 @@
 #include <cmocka.h>
 #include <stdlib.h>
-#include "calib.h"
 #include "helpers.h"
 #include "interface.h"
 #include "main.h"
+#include "self_adjust.h"
 #include "spice.h"
 
 extern uint8_t uart_received[];
@@ -16,7 +16,7 @@ static const unsigned int probes[][3] =
 
 static int setup(void **state)
 {
-    calib_default();
+    self_adjust_default();
     spice_init();
     return 0;
 }

@@ -1,10 +1,10 @@
 #include "main.h"
 #include <string.h>
 #include "adc.h"
-#include "calib.h"
 #include "component.h"
 #include "globals.h"
 #include "helpers.h"
+#include "self_adjust.h"
 #include "timer.h"
 #include "tool.h"
 #include "uart.h"
@@ -70,10 +70,9 @@ int main(void)
     tim3_init();
 
     /* load calibration data, initialize if not valid */
-    if (!calib_load())
+    if (!self_adjust_load())
     {
-        calib_default();
-        calib_write();
+        self_adjust_default();
     }
 
     iwdg_setup();
@@ -98,8 +97,8 @@ static void cmd_wait_ir(void)
     mainloop_centiseconds = 0;
     mainloop_seconds = 0;
     tool = TOOL_NONE;
-    calib_timeout = 0;
-    calib_step = CALIB_IDLE;
+    self_adjust_timeout = 0;
+    self_adjust_step = SELF_ADJUST_IDLE;
     if (uart_frame_rx.id == 1)
     {
         uart_send(1, 0);
@@ -123,8 +122,8 @@ static void cmd_wait_ir(void)
                     uart_send(4, sizeof(result)); /* different id from uart_send_result. TODO: merge */
                 }
                 break;
-            case TOOL_CALIBRATE:
-                calib_step = CALIB_PROBES_CHECK_SHORTED;
+            case TOOL_SELF_ADJUST:
+                self_adjust_step = SELF_ADJUST_PROBES_CHECK_SHORTED;
                 tool = uart_frame_rx.payload[0];
                 break;
             default:

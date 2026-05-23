@@ -104,31 +104,31 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_
     {
         if (p0 == 1)
         {
-            probe_cap = calibration.probe21_cap;
+            probe_cap = self_adjust_vals.probe21_cap;
         }
         else
         {
-            probe_cap = calibration.probe31_cap;
+            probe_cap = self_adjust_vals.probe31_cap;
         }
     }
     else if (p1 == 1)
     {
         if (p0 == 0)
         {
-            probe_cap = calibration.probe12_cap;
+            probe_cap = self_adjust_vals.probe12_cap;
         }
         else
         {
-            probe_cap = calibration.probe32_cap;
+            probe_cap = self_adjust_vals.probe32_cap;
         }
     }
     else if (p0 == 0)
     {
-        probe_cap = calibration.probe13_cap;
+        probe_cap = self_adjust_vals.probe13_cap;
     }
     else
     {
-        probe_cap = calibration.probe23_cap;
+        probe_cap = self_adjust_vals.probe23_cap;
     }
 
     /*

@@ -2,12 +2,11 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "calib.h"
 #include "interface.h"
 
-extern calibration_t calibration;
-extern uint_least8_t calib_timeout;
-extern calib_step_t  calib_step;
+extern self_adjust_values_t self_adjust_vals;
+extern uint_least8_t        self_adjust_timeout;
+extern self_adjust_step_t   self_adjust_step;
 
 extern tester_uart_frame_t uart_frame_rx;
 extern tester_uart_frame_t uart_frame_tx;

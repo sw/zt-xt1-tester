@@ -21,8 +21,8 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
     float ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
     adc_average(channels[ps], 100); /* result thrown away */
     debug_log("Ug=%.3fV Ud=%.3fV\n", ug, ud);
-    float id = (5.0f - ud) / (680.0f + calibration.rp) * 1e3f;
-    debug_log("Id = (5V - %.3fV) / (680ohm + %.0fohm) = %.3fmA\n", ud, calibration.rp, id);
+    float id = (5.0f - ud) / (680.0f + self_adjust_vals.rp) * 1e3f;
+    debug_log("Id = (5V - %.3fV) / (680ohm + %.0fohm) = %.3fmA\n", ud, self_adjust_vals.rp, id);
     if ((ug < 0.3f) || (ug > 1.3f))
     {
         debug_log("Bad Ug\n");
@@ -42,8 +42,8 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
     adc_average(channels[pd], 100); /* result thrown away */
     float us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
     debug_log("Ug=%.3fV Us=%.3fV\n", ug, us);
-    float is = us / (680.0f + calibration.rd) * 1e3f;
-    debug_log("Is = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", us, calibration.rd, is);
+    float is = us / (680.0f + self_adjust_vals.rd) * 1e3f;
+    debug_log("Is = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", us, self_adjust_vals.rd, is);
     if (ug < 4.5f)
     {
         debug_log("Bad Ug\n");
@@ -64,8 +64,8 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
     adc_average(channels[pd], 100); /* result thrown away */
     us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
     debug_log("Ug=%.3fV Us=%.3fV\n", ug, us);
-    is = us / (680.0f + calibration.rd) * 1e3f;
-    debug_log("Is = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", us, calibration.rd, is);
+    is = us / (680.0f + self_adjust_vals.rd) * 1e3f;
+    debug_log("Is = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", us, self_adjust_vals.rd, is);
     if (ug > 0.5f)
     {
         debug_log("Bad Ug\n");
@@ -97,7 +97,7 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
     ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
     ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
     adc_average(channels[ps], 100); /* result thrown away */
-    id = (5.0f - ud) / (680.0f + calibration.rp) * 1e3f;
+    id = (5.0f - ud) / (680.0f + self_adjust_vals.rp) * 1e3f;
     if (ug > 0.25f)
     {
         debug_log("Bad Ug\n");
@@ -117,7 +117,7 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
     ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
     adc_average(channels[pd], 100); /* result thrown away */
     us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
-    is = (5.0f - us) / (680.0f + calibration.rp) * 1e3f;
+    is = (5.0f - us) / (680.0f + self_adjust_vals.rp) * 1e3f;
     if ((ug < 0.3f) || (ug > 1.3f))
     {
         debug_log("Bad Ug\n");
@@ -170,7 +170,7 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
 
     if (6.0f < result.current_mA)
     {
-        result.current_mA = us / calibration.rd * 1e3f;
+        result.current_mA = us / self_adjust_vals.rd * 1e3f;
     }
 
     debug_log("Found n-channel JFET!\n");
@@ -196,8 +196,8 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
     float ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
     float us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
     debug_log("Ug=%.3fV Ud=%.3fV Us=%.3fV\n", ug, ud, us);
-    float id = ud / (680.0f + calibration.rd) * 1e3f;
-    debug_log("Id = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", ud, calibration.rd, id);
+    float id = ud / (680.0f + self_adjust_vals.rd) * 1e3f;
+    debug_log("Id = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", ud, self_adjust_vals.rd, id);
     if (((us - ug) < 0.3f) || ((us - ug) > 1.3f))
     {
         debug_log("Bad Us-Ug\n");
@@ -217,8 +217,8 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
     adc_average(channels[pd], 100); /* result thrown away */
     us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
     debug_log("Ug=%.3fV Us=%.3fV\n", ug, us);
-    float is = (5.0f - us) / (680.0f + calibration.rp) * 1e3f;
-    debug_log("Is = (5V - %.3fV) / (680ohm + %.0fohm) = %.3fmA\n", us, calibration.rp, is);
+    float is = (5.0f - us) / (680.0f + self_adjust_vals.rp) * 1e3f;
+    debug_log("Is = (5V - %.3fV) / (680ohm + %.0fohm) = %.3fmA\n", us, self_adjust_vals.rp, is);
     if (ug > 0.5f)
     {
         debug_log("Bad Ug\n");
@@ -238,7 +238,7 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
     ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
     adc_average(channels[pd], 100); /* result thrown away */
     us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
-    is = (5.0f - us) / (680.0f + calibration.rp) * 1e3f;
+    is = (5.0f - us) / (680.0f + self_adjust_vals.rp) * 1e3f;
     if (ug < 4.5f)
     {
         debug_log("Bad Ug\n");
@@ -270,8 +270,8 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
     ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
     ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
     adc_average(channels[ps],100);
-    id = ud / (680.0f + calibration.rd) * 1e3f;
-    debug_log("Id = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", ud, calibration.rd, id);
+    id = ud / (680.0f + self_adjust_vals.rd) * 1e3f;
+    debug_log("Id = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", ud, self_adjust_vals.rd, id);
     if (ug < 4.75f)
     {
         debug_log("Bad Ug\n");
@@ -332,7 +332,7 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
 
     if (6.0f < result.current_mA)
     {
-        result.current_mA = ud / calibration.rd * 1e3f;
+        result.current_mA = ud / self_adjust_vals.rd * 1e3f;
     }
 
     debug_log("Found p-channel JFET!\n");

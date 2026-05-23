@@ -10,7 +10,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Add project sources
 list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/bjt.c
-    ${CMAKE_SOURCE_DIR}/src/calib.c
     ${CMAKE_SOURCE_DIR}/src/cap.c
     ${CMAKE_SOURCE_DIR}/src/component.c
     ${CMAKE_SOURCE_DIR}/src/diode.c
@@ -23,6 +22,7 @@ list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/main.c
     ${CMAKE_SOURCE_DIR}/src/probe.c
     ${CMAKE_SOURCE_DIR}/src/resistor.c
+    ${CMAKE_SOURCE_DIR}/src/self_adjust.c
     ${CMAKE_SOURCE_DIR}/src/thy_triac.c
     ${CMAKE_SOURCE_DIR}/src/tool.c
     ${CMAKE_SOURCE_DIR}/src/uart.c

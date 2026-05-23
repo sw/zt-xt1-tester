@@ -1,8 +1,8 @@
 #include <cmocka.h>
-#include "calib.h"
 #include "helpers.h"
 #include "interface.h"
 #include "main.h"
+#include "self_adjust.h"
 #include "spice.h"
 
 extern uint8_t uart_received[];
@@ -10,7 +10,7 @@ static const tester_result_t *const result_p = (tester_result_t *)uart_received;
 
 static int setup(void **state)
 {
-    calib_default();
+    self_adjust_default();
     spice_init();
     return 0;
 }

@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#include "debug.h"
+
 typedef union
 {
     struct
@@ -99,5 +101,35 @@ typedef enum : uint8_t
     TOOL_TEMP_DS18B20   = 3,
     TOOL_TEMP_HUM_DHT11 = 4,
     TOOL_INFRARED       = 5,
-    TOOL_CALIBRATE      = 6,
+    TOOL_SELF_ADJUST    = 6,
 } tool_t;
+
+typedef enum : uint8_t
+{
+    SELF_ADJUST_IDLE                 = 0,
+    SELF_ADJUST_PROBES_CHECK_SHORTED = 1,
+    SELF_ADJUST_PROBES_RESISTANCE    = 2,
+    SELF_ADJUST_PROBES_CHECK_OPEN    = 3,
+    SELF_ADJUST_PROBES_CAPACITANCE   = 4,
+    SELF_ADJUST_STORE                = 5,
+    SELF_ADJUST_TIMEOUT              = 6,
+} self_adjust_step_t;
+
+typedef struct
+{
+    float probe12_cap;
+    float probe13_cap;
+    float probe21_cap;
+    float probe23_cap;
+    float probe31_cap;
+    float probe32_cap;
+    float rp;
+    float rd;
+} self_adjust_values_t;
+
+typedef struct
+{
+    self_adjust_step_t step;
+    self_adjust_values_t val;
+} self_adjust_state_t;
+static_assert(sizeof(self_adjust_state_t) == 36);

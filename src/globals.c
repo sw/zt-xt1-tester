@@ -1,8 +1,8 @@
 #include "globals.h"
 
-calibration_t calibration;
-uint_least8_t calib_timeout;
-calib_step_t  calib_step;
+self_adjust_values_t self_adjust_vals;
+uint_least8_t        self_adjust_timeout;
+self_adjust_step_t   self_adjust_step;
 
 tester_uart_frame_t uart_frame_rx;
 tester_uart_frame_t uart_frame_tx;
