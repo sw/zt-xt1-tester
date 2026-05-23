@@ -61,7 +61,7 @@ uint_fast16_t adc_single(uint_fast8_t channel)
     return ADC->DAT;
 }
 
-uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
+uint_fast32_t adc_sum(uint_fast8_t channel, uint_fast16_t num)
 {
     uint_fast16_t i;
     uint_fast32_t sum = 0;
@@ -84,5 +84,10 @@ uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
 
         sum += ADC_GetDat(ADC);
     }
-    return sum / num;
+    return sum;
+}
+
+uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
+{
+    return adc_sum(channel, num) / num;
 }

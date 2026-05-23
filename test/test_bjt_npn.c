@@ -30,11 +30,15 @@ static int teardown(void **state)
 static void test_one(void **state)
 {
     intptr_t i = (intptr_t)*state;
-    char *dut[3] = { ".include \"../../../test/spice/2N3904.txt\"" };
+    char *dut[4] = {
+        ".include \"../../../test/spice/2N3904.txt\"",
+        ".include \"../../../test/spice/2SC3281.txt\"",
+    };
+
     /*                      C    B    E */
-    asprintf(&dut[1], "q1 /t%u /t%u /t%u 2n3904", probes[i][1], probes[i][0], probes[i][2]);
+    asprintf(&dut[2], "q1 /t%u /t%u /t%u 2n3904", probes[i][1], probes[i][0], probes[i][2]);
     spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
-    free(dut[1]);
+    free(dut[2]);
 
     expect_ack();
     expect_result();
@@ -45,6 +49,24 @@ static void test_one(void **state)
     assert_uint_equal(result_p->junction, JUNCTION_NPN);
     assert_float_equal(result_p->hfe, 152.6f, 1.0f);
     assert_float_equal(result_p->bjt_ube, 0.68f, 0.01f);
+    assert_uint_equal(result_p->probes[0], probes[i][0]);
+    assert_uint_equal(result_p->probes[1], probes[i][1]);
+    assert_uint_equal(result_p->probes[2], probes[i][2]);
+
+    /*                      C    B    E */
+    asprintf(&dut[2], "q1 /t%u /t%u /t%u 2sc3281", probes[i][1], probes[i][0], probes[i][2]);
+    spice_dut_set(dut, SPICE_TSTEP_DEFAULT);
+    free(dut[2]);
+
+    expect_ack();
+    expect_result();
+    mock_uart(1, 0, 1, (uint8_t[]){0});
+    main_cycle();
+
+    assert_uint_equal(result_p->component, COMPONENT_BJT);
+    assert_uint_equal(result_p->junction, JUNCTION_NPN);
+    assert_float_equal(result_p->hfe, 84.0f, 1.0f);
+    assert_float_equal(result_p->bjt_ube, 0.49f, 0.01f);
     assert_uint_equal(result_p->probes[0], probes[i][0]);
     assert_uint_equal(result_p->probes[1], probes[i][1]);
     assert_uint_equal(result_p->probes[2], probes[i][2]);

@@ -1,57 +1,78 @@
+#include <math.h>
 #include <stdbool.h>
 #include "adc.h"
 #include "debug.h"
 #include "globals.h"
-#include "helpers.h"
 #include "probe.h"
 #include "timer.h"
 
-static bool bjt_npn(unsigned int pb, unsigned int pc, unsigned int pe)
+static bool bjt_npn(uint_fast8_t pb, uint_fast8_t pc, uint_fast8_t pe)
 {
-    static const unsigned int channels[3] = {1, 3, 7};
+    static const uint_least8_t channels[3] = {1, 3, 7};
 
     debug_log("%s(%u, %u, %u)\n", __FUNCTION__, pb, pc, pe);
 
     probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
     probe_configure(pc, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(pe, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(1);
-    float ub = adc_average(channels[pb], 100) * (5.0f / 4095.0f);
-    float uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
-    float ue = adc_average(channels[pe], 100) * (5.0f / 4095.0f);
-    debug_log("Ub=%.3fV Uc=%.3fV Ue=%.3fV\n", ub, uc, ue);
-    float ib = (5.0f - ub) / (470e3f + calibration.rp);
-    debug_log("Ib = (5V - %.3fV) / (470kohm + %.0fohm) = %.2fuA\n", ub, calibration.rp, ib * 1e6f);
-    float ic = (5.0f - uc) / (680.0f + calibration.rp);
-    debug_log("Ic = (5V - %.3fV) / (680ohm + %.0fohm) = %.2fmA\n", uc, calibration.rp, ic * 1e3f);
-    result.hfe = divf(ic, ib);
-    debug_log("hFE = %.1f\n", result.hfe);
-    result.bjt_ube = ub - ue;
-    debug_log("Ube = %.3fV - %.3fV = %.3fV\n", ub, ue, result.bjt_ube);
-    if ((result.bjt_ube < 0.5f) || (result.bjt_ube > 0.9f))
+    tim6_msleep(5);
+    int32_t ub = ADC_MEASURE(channels[pb]);
+    int32_t uc = ADC_MEASURE(channels[pc]);
+    int32_t ue = ADC_MEASURE(channels[pe]);
+    debug_log("Ub=%.3fV Uc=%.3fV Ue=%.3fV\n", Vfloat(ub), Vfloat(uc), Vfloat(ue));
+    int32_t ube = ub - ue;
+    debug_log("Ube = %.3fV - %.3fV = %.3fV\n", Vfloat(ub), Vfloat(ue), Vfloat(ube));
+    if ((ube < V(0.4)) || (ube > V(1.7)))
     {
         debug_log("bad Ube\n");
         return false;
     }
-    if ((result.hfe < 10.0f) || (result.hfe > 600.0f))
-    {
-        debug_log("bad hFE\n");
-        return false;
-    }
-    if ((uc < 0.05f) || (uc > 4.95f))
+    if ((uc < V(0.05)) || (uc > V(4.95)))
     {
         debug_log("bad Uc\n");
+        return false;
+    }
+    result.bjt_ube = Vfloat(ube);
+
+    /* calculate hFE for common emitter circuit */
+    result.hfe = 470e3f / (680.0f + calibration.rp) * (Vcc - uc) / (Vcc - ub);
+    debug_log("hFE (common emitter) = %.1f\n", result.hfe);
+
+    /* measure hFE in common collector circuit, first with low base resistor */
+    probe_configure(pb, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(pc, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(pe, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    tim6_msleep(5);
+    ub = Vcc - ADC_MEASURE(channels[pb]);
+    ue = ADC_MEASURE(channels[pe]);
+    float hfe = (float)(ue - ub) / ub;
+    debug_log("hFE (common collector, low base resistor) = %.1f\n", hfe);
+    /* for a Darlington or high-gain BJT, measure again with high base resistor */
+    if (ub < mV(15))
+    {
+        probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+        tim6_msleep(5);
+        ub = Vcc - ADC_MEASURE(channels[pb]);
+        ue = ADC_MEASURE(channels[pe]);
+        hfe = 470e3f / (680.0f + calibration.rd) * ue / ub;
+        debug_log("hFE (common collector, high base resistor) = %.1f\n", hfe);
+    }
+    result.hfe = fmaxf(result.hfe, hfe);
+
+    if ((result.hfe < 10.0f) || (result.hfe > 75000.0f))
+    {
+        debug_log("bad hFE\n");
         return false;
     }
 
     probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
     probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
     probe_configure(pe, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(1);
-    uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
-    result.current_mA = (5.0f - uc) / (470e3f + calibration.rd) * 1e3f;
-    debug_log("Ic = (5V - %.3fV) / (470kohm + %.0fohm) = %.1fuA\n", uc, calibration.rd, result.current_mA * 1e3f);
-    if ((result.current_mA > 0.5f) || (uc < 4.5f))
+    tim6_msleep(5);
+    uc = ADC_MEASURE(channels[pc]);
+    result.current_mA = (Vcc - uc) * (float)(1e3 / 470e3 * 5.0 / 4096.0 / ADC_N);
+    debug_log("Ic = (5V - %.3fV) / 470kohm = %.1fuA\n", Vfloat(uc), result.current_mA * 1e3f);
+    if ((result.current_mA > 0.5f) || (uc < V(4.5)))
     {
         debug_log("bad Ic or Uc\n");
         return false;
@@ -60,12 +81,10 @@ static bool bjt_npn(unsigned int pb, unsigned int pc, unsigned int pe)
     probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
     probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(pe, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-#ifndef __ARM_EABI__
-    tim6_usleep(1); /* not in original firmware, required for simulation */
-#endif
-    ub = adc_average(channels[pb], 100) * (5.0f / 4095.0f);
-    debug_log("Ub = %.3fV\n", ub);
-    if (ub > 2.5f)
+    tim6_msleep(5);
+    ub = ADC_MEASURE(channels[pb]);
+    debug_log("Ub = %.3fV\n", Vfloat(ub));
+    if (ub > V(2.5))
     {
         debug_log("bad Ub\n");
         return false;
@@ -74,67 +93,82 @@ static bool bjt_npn(unsigned int pb, unsigned int pc, unsigned int pe)
     probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
     probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
     probe_configure(pe, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-#ifndef __ARM_EABI__
-    tim6_usleep(1); /* not in original firmware, required for simulation */
-#endif
-    uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
-    ue = adc_average(channels[pe], 100) * (5.0f / 4095.0f);
-    result.diode_vf = ue - uc;
-    debug_log("NPN found! Uf = %.3fV - %.3fV = %.3fV\n", ue, uc, result.diode_vf);
+    tim6_msleep(5);
+    uc = ADC_MEASURE(channels[pc]);
+    ue = ADC_MEASURE(channels[pe]);
+    result.diode_vf = Vfloat(ue - uc);
+    debug_log("NPN found! Uf = %.3fV - %.3fV = %.3fV\n", Vfloat(ue), Vfloat(uc), result.diode_vf);
     result.junction = JUNCTION_NPN;
     return true;
 }
 
-static bool bjt_pnp(unsigned int pb, unsigned int pc, unsigned int pe)
+static bool bjt_pnp(uint_fast8_t pb, uint_fast8_t pc, uint_fast8_t pe)
 {
-    static const unsigned int channels[3] = {1, 3, 7};
+    static const uint_least8_t channels[3] = {1, 3, 7};
 
     debug_log("%s(%u, %u, %u)\n", __FUNCTION__, pb, pc, pe);
 
     probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
     probe_configure(pc, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     probe_configure(pe, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-#ifndef __ARM_EABI__
-    tim6_usleep(50); /* not in original firmware, required for simulation */
-#endif
-    float ub = adc_average(channels[pb], 100) * (5.0f / 4095.0f);
-    float uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
-    float ue = adc_average(channels[pe], 100) * (5.0f / 4095.0f);
-    debug_log("Ub=%.3fV Uc=%.3fV Ue=%.3fV\n", ub, uc, ue);
-    float ib = ub / (470e3f + calibration.rd);
-    debug_log("Ib = %.3fV / (470kohm + %.0fohm) = %.2fuA\n", ub, calibration.rd, ib * 1e6f);
-    float ic = uc / (680.0f + calibration.rd);
-    debug_log("Ic = %.3fV / (680ohm + %.0fohm) = %.2fmA\n", uc, calibration.rd, ic * 1e3f);
-    result.hfe = divf(ic, ib);
-    debug_log("hFE = %.1f\n", result.hfe);
-    result.bjt_ube = ue - ub;
-    debug_log("Ube = %.3fV - %.3fV = %.3fV\n", ue, ub, result.bjt_ube);
-    if ((result.bjt_ube < 0.5f) || (result.bjt_ube > 0.9f))
+    tim6_msleep(5);
+    int32_t ub = ADC_MEASURE(channels[pb]);
+    int32_t uc = ADC_MEASURE(channels[pc]);
+    int32_t ue = ADC_MEASURE(channels[pe]);
+    debug_log("Ub=%.3fV Uc=%.3fV Ue=%.3fV\n", Vfloat(ub), Vfloat(uc), Vfloat(ue));
+    int32_t ube = ue - ub;
+    debug_log("Ube = %.3fV - %.3fV = %.3fV\n", Vfloat(ue), Vfloat(ub), Vfloat(ube));
+    if ((ube < V(0.4)) || (ube > V(1.7)))
     {
         debug_log("bad Ube\n");
         return false;
     }
-    if ((result.hfe < 10.0f) || (result.hfe > 600.0f))
-    {
-        debug_log("bad hFE\n");
-        return false;
-    }
-    if ((uc < 0.05f) || (uc > 4.95f))
+    if ((uc < V(0.05)) || (uc > V(4.95)))
     {
         debug_log("bad Uc\n");
+        return false;
+    }
+    result.bjt_ube = Vfloat(ube);
+
+    /* calculate hFE for common emitter circuit */
+    result.hfe = 470e3f / (680.0f + calibration.rd) * uc / ub;
+    debug_log("hFE (common emitter) = %.1f\n", result.hfe);
+
+    /* measure hFE in common collector circuit, first with low base resistor */
+    probe_configure(pb, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    probe_configure(pc, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(pe, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    tim6_msleep(5);
+    ub = ADC_MEASURE(channels[pb]);
+    ue = Vcc - ADC_MEASURE(channels[pe]);
+    float hfe = (float)(ue - ub) / ub;
+    debug_log("hFE (common collector, low base resistor) = %.1f\n", hfe);
+    /* for a Darlington or high-gain BJT, measure again with high base resistor */
+    if (ub < mV(15))
+    {
+        probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+        tim6_msleep(5);
+        ub = ADC_MEASURE(channels[pb]);
+        ue = Vcc - ADC_MEASURE(channels[pe]);
+        hfe = 470e3f / (680.0f + calibration.rp) * ue / ub;
+        debug_log("hFE (common collector, high base resistor) = %.1f\n", hfe);
+    }
+    result.hfe = fmaxf(result.hfe, hfe);
+
+    if ((result.hfe < 10.0f) || (result.hfe > 75000.0f))
+    {
+        debug_log("bad hFE\n");
         return false;
     }
 
     probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
     probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
     probe_configure(pe, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-#ifndef __ARM_EABI__
-    tim6_usleep(50); /* not in original firmware, required for simulation */
-#endif
-    uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
-    result.current_mA = uc / (470e3f + calibration.rd) * 1e3f;
-    debug_log("Ic = %.3fV / (470kohm + %.0fohm) = %.1fuA\n", uc, calibration.rd, result.current_mA * 1e3f);
-    if ((result.current_mA > 0.5f) || (uc > 0.5f))
+    tim6_msleep(5);
+    uc = ADC_MEASURE(channels[pc]);
+    result.current_mA = uc * (float)(1e3 / 470e3 * 5.0 / 4096.0 / ADC_N);
+    debug_log("Ic = %.3fV / 470kohm = %.1fuA\n", Vfloat(uc), result.current_mA * 1e3f);
+    if ((result.current_mA > 0.5f) || (uc > V(0.5)))
     {
         debug_log("bad Ic or Uc\n");
         return false;
@@ -143,12 +177,10 @@ static bool bjt_pnp(unsigned int pb, unsigned int pc, unsigned int pe)
     probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
     probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
     probe_configure(pe, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-#ifndef __ARM_EABI__
-    tim6_usleep(50); /* not in original firmware, required for simulation */
-#endif
-    ub = adc_average(channels[pb], 100) * (5.0f / 4095.0f);
-    debug_log("Ub = %.3fV\n", ub);
-    if (ub < 2.5f)
+    tim6_msleep(5);
+    ub = ADC_MEASURE(channels[pb]);
+    debug_log("Ub = %.3fV\n", Vfloat(ub));
+    if (ub < V(2.5))
     {
         debug_log("bad Ub\n");
         return false;
@@ -157,27 +189,20 @@ static bool bjt_pnp(unsigned int pb, unsigned int pc, unsigned int pe)
     probe_configure(pb, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
     probe_configure(pc, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
     probe_configure(pe, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-#ifndef __ARM_EABI__
-    tim6_usleep(50); /* not in original firmware, required for simulation */
-#endif
-    uc = adc_average(channels[pc], 100) * (5.0f / 4095.0f);
-    ue = adc_average(channels[pe], 100) * (5.0f / 4095.0f);
-    result.diode_vf = uc - ue;
-    debug_log("PNP found! Uf = %.3fV - %.3fV = %.3fV\n", uc, ue, result.diode_vf);
+    tim6_msleep(5);
+    uc = ADC_MEASURE(channels[pc]);
+    ue = ADC_MEASURE(channels[pe]);
+    result.diode_vf = Vfloat(uc - ue);
+    debug_log("PNP found! Uf = %.3fV - %.3fV = %.3fV\n", Vfloat(uc), Vfloat(ue), result.diode_vf);
     result.junction = JUNCTION_PNP;
     return true;
 }
 
 bool bjt(void)
 {
-    static const unsigned int probes[6][3] =
+    static const uint_least8_t probes[][3] =
     {
-        {0, 1, 2},
-        {0, 2, 1},
-        {1, 0, 2},
-        {1, 2, 0},
-        {2, 0, 1},
-        {2, 1, 0},
+        {0, 1, 2}, {0, 2, 1}, {1, 0, 2}, {1, 2, 0}, {2, 0, 1}, {2, 1, 0}
     };
     int npn_idx = -1;
     float npn_max_hfe = 0;
@@ -245,6 +270,6 @@ bool bjt(void)
                result.probes[1] + 1,
                result.probes[2] + 1);
     }
-    result.component = COMPONENT_BJT;
+    result.component = result.bjt_ube > 0.95f ? COMPONENT_DARLINGTON : COMPONENT_BJT;
     return true;
 }

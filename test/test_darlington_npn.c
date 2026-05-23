@@ -46,9 +46,9 @@ static void test_one(void **state)
 
     assert_uint_equal(result_p->component, COMPONENT_DARLINGTON);
     assert_uint_equal(result_p->junction, JUNCTION_NPN);
-    /* TODO: hFE is hilariously wrong */
-    assert_float_equal(result_p->hfe, 71.2f, 1.0f);
-    assert_float_equal(result_p->bjt_ube, 1.60f, 0.01f);
+    /* TODO: hFE seems too high */
+    assert_float_equal(result_p->hfe, 20098.0f, 5.0f);
+    assert_float_equal(result_p->bjt_ube, 1.32f, 0.01f);
     assert_uint_equal(result_p->probes[0], probes[i][0]);
     assert_uint_equal(result_p->probes[1], probes[i][1]);
     assert_uint_equal(result_p->probes[2], probes[i][2]);

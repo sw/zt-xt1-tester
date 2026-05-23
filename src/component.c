@@ -5,7 +5,7 @@
 void component_do_all(void)
 {
     result.component = COMPONENT_NONE;
-    if (!(zener() || jfet() || dmos() || thy_triac() || darlington() || bjt() || emos() || igbt() || ujt() || diode()))
+    if (!(zener() || jfet() || dmos() || thy_triac() || bjt() || emos() || igbt() || ujt() || diode()))
     {
         cap_bat();
         resistor();

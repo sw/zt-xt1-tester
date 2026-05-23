@@ -341,7 +341,7 @@ void spice_dut_set(char **dut, double t_step)
 
 uint_fast16_t adc_single(uint_fast8_t channel)
 {
-    int val = adc_val[channel] * (4095.0f / 5.0f);
+    int val = adc_val[channel] * (4096.0f / 5.0f);
     if (val < 0)
     {
         val = 0;
@@ -349,6 +349,20 @@ uint_fast16_t adc_single(uint_fast8_t channel)
     if (val > 4095)
     {
         val = 4095;
+    }
+    return val;
+}
+
+uint_fast32_t adc_sum(uint_fast8_t channel, uint_fast16_t num)
+{
+    int_fast64_t val = adc_val[channel] * (4096.0 / 5.0) * num;
+    if (val < 0)
+    {
+        val = 0;
+    }
+    if (val > 4095 * num)
+    {
+        val = 4095 * num;
     }
     return val;
 }

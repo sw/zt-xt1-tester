@@ -53,7 +53,7 @@ static bool thy_triac_probe(unsigned int p0, unsigned int p1, unsigned int pg)
     tim6_usleep(100);
     probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
 #ifndef __ARM_EABI__
-    tim6_usleep(10); /* not in original firmware, required for simulation */
+    tim6_usleep(100); /* not in original firmware, required for simulation */
 #endif
     u1 = adc_average(channels[p1], 100) * (5.0f / 4095.0f);
     u0 = adc_average(channels[p0], 100) * (5.0f / 4095.0f);

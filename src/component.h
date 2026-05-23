@@ -9,8 +9,6 @@ bool bjt(void);
 bool cap_bat(void);
 bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_probe);
 
-bool darlington(void);
-
 bool dht11_detect(void);
 bool dht11_read(void);
 
