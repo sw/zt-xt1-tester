@@ -22,6 +22,3 @@ extern tester_result_t result;
 
 extern volatile uint32_t mainloop_seconds;
 extern volatile uint32_t mainloop_centiseconds;
-
-extern volatile uint32_t tim3_cnt_comp;
-extern volatile uint32_t tim3_expiry;

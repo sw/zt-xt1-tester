@@ -1,6 +1,7 @@
 #include "main.h"
 #include <string.h>
 #include "adc.h"
+#include "comp.h"
 #include "component.h"
 #include "globals.h"
 #include "helpers.h"
@@ -11,7 +12,6 @@
 #ifdef __ARM_EABI__
 #include "n32g031_iwdg.h"
 #include "n32g031_rcc.h"
-#include "n32g031_tim.h"
 
 static void clock_enable(void)
 {
@@ -19,37 +19,16 @@ static void clock_enable(void)
     RCC_EnableAHBPeriphClk(RCC_AHB_PERIPH_DMA, ENABLE);
     /* enable ADC clock */
     RCC_EnableAHBPeriphClk(RCC_AHB_PERIPH_ADC, ENABLE);
-    /* enable TIM3, TIM6 clocks */
-    RCC_EnableAPB1PeriphClk(RCC_APB1_PERIPH_TIM3 | RCC_APB1_PERIPH_TIM6, ENABLE);
-    /* enable OPAMP, COMP, COMPFILT clocks */
-    RCC_EnableAPB1PeriphClk(RCC_APB1_PERIPH_OPAMP | RCC_APB1_PERIPH_COMPFILT | RCC_APB1_PERIPH_COMP, ENABLE);
+    /* enable TIM6 clock */
+    RCC_EnableAPB1PeriphClk(RCC_APB1_PERIPH_TIM6, ENABLE);
+    /* enable OPAMP clock */
+    RCC_EnableAPB1PeriphClk(RCC_APB1_PERIPH_OPAMP, ENABLE);
     /* enable IOPF, IOPB, IOPA clocks */
     RCC_EnableAPB2PeriphClk(RCC_APB2_PERIPH_GPIOF | RCC_APB2_PERIPH_GPIOB | RCC_APB2_PERIPH_GPIOA, ENABLE);
     /* enable AFIO clock */
     RCC_EnableAPB2PeriphClk(RCC_APB2_PERIPH_AFIO, ENABLE);
-    /* enable TIM1, TIM8, USART1 clocks */
-    RCC_EnableAPB2PeriphClk(RCC_APB2_PERIPH_USART1 | RCC_APB2_PERIPH_TIM8 | RCC_APB2_PERIPH_TIM1, ENABLE);
-}
-
-static void tim3_init(void)
-{
-    /* struct is not initialized in original firmware */
-    TIM_TimeBaseInitType TIM_TimeBaseInitStruct = { 0 };
-    NVIC_InitType NVIC_InitStruct;
-
-    TIM_TimeBaseInitStruct.Prescaler = 0;
-    TIM_TimeBaseInitStruct.CntMode = TIM_CNT_MODE_UP;
-    TIM_TimeBaseInitStruct.Period = 0xffff;
-    TIM_TimeBaseInitStruct.ClkDiv = TIM_CLK_DIV1;
-    TIM_TimeBaseInitStruct.CapCh3FromCompEn = true;
-    TIM_InitTimeBase(TIM3, &TIM_TimeBaseInitStruct);
-    TIM_ConfigInt(TIM3, TIM_INT_UPDATE, ENABLE);
-    TIM_Enable(TIM3, ENABLE);
-
-    NVIC_InitStruct.NVIC_IRQChannel = TIM3_IRQn;
-    NVIC_InitStruct.NVIC_IRQChannelPriority = 1;
-    NVIC_InitStruct.NVIC_IRQChannelCmd = 1;
-    NVIC_Init(&NVIC_InitStruct);
+    /* enable USART1 clock */
+    RCC_EnableAPB2PeriphClk(RCC_APB2_PERIPH_USART1, ENABLE);
 }
 
 static void iwdg_setup(void)
@@ -67,7 +46,7 @@ int main(void)
     tim6_init();
     uart_init();
     adc_init();
-    tim3_init();
+    comp_init();
 
     /* load calibration data, initialize if not valid */
     if (!self_adjust_load())

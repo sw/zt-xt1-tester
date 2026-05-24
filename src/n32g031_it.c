@@ -115,19 +115,6 @@ void USART1_IRQHandler(void)
     }
 }
 
-void COMP_IRQHandler(void)
-{
-    /* bug? reads CNT instead of CCDATx */
-    tim3_cnt_comp = TIM3->CNT;
-    EXTI_ClrITPendBit(EXTI_LINE18);
-}
-
-void TIM3_IRQHandler(void)
-{
-    tim3_expiry++;
-    TIM_ClrIntPendingBit(TIM3, TIM_INT_UPDATE);
-}
-
 /**
  * @}
  */

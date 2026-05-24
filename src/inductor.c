@@ -24,7 +24,7 @@ float inductor_comp(unsigned int p0, unsigned int p1)
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     const uint_fast8_t vref = 6;
-    comp_init(p0, vref);
+    comp_prepare(p0, vref);
     tim6_msleep(10);
 
     /* drive p1 high */
@@ -43,7 +43,7 @@ float inductor_comp(unsigned int p0, unsigned int p1)
 #endif
 
     /* should probably use rp/rd */
-    float l1 = logf(1.0f - (result.resistance + 30.0f) / 15.0f * vref / 63.0f);
+    float l1 = logf(1.0f - (result.resistance + 30.0f) * (vref / 64.0f / 15.0f));
     float l2 = -(int)cnt / 48.0f * (result.resistance + 30.0f) / l1;
     debug_log("cnt=%u l2=%.1f\n", cnt, l2);
 

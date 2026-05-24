@@ -372,12 +372,12 @@ uint_fast16_t adc_average(uint_fast8_t channel, uint_fast16_t num)
     return adc_single(channel);
 }
 
-void comp_init(uint_fast8_t probe, uint_fast8_t vref_sel)
+void comp_prepare(uint_fast8_t probe, uint_fast8_t vref_sel)
 {
     assert(probe < 3);
     comp_probe = probe;
     assert(vref_sel < 64);
-    comp_threshold = vref_sel * (5.0f / 63.0f); /* TODO: 63 or 64? */
+    comp_threshold = vref_sel * (5.0f / 64.0f);
 }
 
 uint_fast32_t comp_start(unsigned int probe_pull, unsigned int pullup, uint_fast32_t timeout)

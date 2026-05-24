@@ -140,7 +140,7 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_DRV_LO);
     tim6_msleep(2);
     const uint_fast8_t vref = 51;
-    comp_init(p1, vref);
+    comp_prepare(p1, vref);
 
     /* not in original firmware: reset p2 after discharging */
     probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
@@ -166,9 +166,8 @@ bool cap_small(unsigned int p0, unsigned int p1, unsigned int p2, bool subtract_
     /*
         each timer tick equates ~27fF.
         original firmware actually calls double log(5.25)
-        shouldn't we divide by 64 instead?
     */
-    result.capacitance_pF = cnt * (1e12f / 48e6f / 470e3f / logf(63.0f / (63.0f - vref)));
+    result.capacitance_pF = cnt * (float)(1e12 / 48e6 / 470e3 / log(64.0 / (64.0 - vref)));
     if (subtract_probe)
     {
         result.capacitance_pF -= probe_cap;
@@ -195,11 +194,11 @@ static void cap_medium(unsigned int p0, unsigned int p1, unsigned int p2)
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     tim6_msleep(100);
     const uint_fast8_t vref = 32;
-    comp_init(p1, vref);
+    comp_prepare(p1, vref);
     /* original firmware has 4.8M but only 1.3M are needed for maximum value of 55uF */
     uint32_t cnt = comp_start(r680_gpios[p1], r680_pins[p1], 48000000 / 2);
     /* use counter value even if timeout reached */
-    result.capacitance_pF = cnt * (1e12f / 48e6f / 691.0f / logf(63.0f / (63.0f - vref)));
+    result.capacitance_pF = cnt * (float)(1e12 / 48e6 / log(64.0 / (64.0 - vref))) / (680.0f + self_adjust_vals.rp);
     debug_log("cnt=%u C=%.1fnF\n", cnt, result.capacitance_pF / 1e3f);
 
     /* probes are not reset in the original firmware */
@@ -212,74 +211,54 @@ static void cap_big(unsigned int p0, unsigned int p1, unsigned int p2)
     static const unsigned int channels[3] = {1, 3, 7};
     debug_log("%s(%u, %u)\n", __FUNCTION__, p0, p1);
     probe_configure(p2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-#ifndef __ARM_EABI__
-    tim6_usleep(10); /* not in original firmware, required for simulation */
-#endif
-    float u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
-    if (u < 0.3f)
+    do
     {
-        while (true)
-        {
-#ifndef __ARM_EABI__
-            tim6_usleep(10); /* not in original firmware, required for simulation */
-#endif
-            u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
-            if (0.3f < u)
-            {
-                break;
-            }
-            iwdg_reload();
-        }
-    }
-
-    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-#ifndef __ARM_EABI__
-    tim6_usleep(10); /* not in original firmware, required for simulation */
-#endif
-    adc_average(channels[p0], 100);
-    adc_average(channels[p1], 100);
-    while (true)
-    {
+        iwdg_reload();
 #ifndef __ARM_EABI__
         tim6_usleep(10); /* not in original firmware, required for simulation */
 #endif
-        u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
-        if (0.01f < u)
-        {
-            break;
-        }
-        iwdg_reload();
     }
+    while (ADC_MEASURE(channels[p1]) - ADC_MEASURE(channels[p0]) < V(0.3));
+
+    probe_configure(p0, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    do
+    {
+        iwdg_reload();
+#ifndef __ARM_EABI__
+        tim6_usleep(10); /* not in original firmware, required for simulation */
+#endif
+    }
+    while (ADC_MEASURE(channels[p0]) - ADC_MEASURE(channels[p1]) < V(0.01));
 
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     tim6_msleep(100);
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     tim6_msleep(1000);
-    comp_init(p1, 10);
+    comp_prepare(p1, 10);
     /* TODO: this doesn't quite fit the comp_start() semantics */
     probe_configure(p1, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     static const uint_fast32_t timeout = 48000000 * 5;
     uint32_t cnt = comp_start(r680_gpios[p1], r680_pins[p1], timeout);
+    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    tim6_msleep(10);
+    int32_t u = ADC_MEASURE(channels[p1]) - ADC_MEASURE(channels[p0]);
+    probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     if (cnt >= timeout)
     {
         result.capacitance_pF = 3e10f; /* 30mF */
         return;
     }
-
-    probe_configure(p1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(10);
     /*
         U_c(t) = U_in * (1 - e^(-t/RC))
         C = t / (R * ln((U_in - U_c) / U_in))
     */
-    u = (adc_average(channels[p1], 100) - adc_average(channels[p0], 100)) * (5.0f / 4095.0f);
-    probe_configure(p1, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    result.capacitance_pF = cnt * (1e12f / 48e6f / 680.0f / logf(5.0f / (5.0f - u)));
-    debug_log("cnt=%u U=%f C=%.1fuF\n", cnt, u, result.capacitance_pF / 1e6f);
+    result.capacitance_pF = cnt * (1e12f / 48e6f) / (680.0f + self_adjust_vals.rp) / logf((float)Vcc / (Vcc - u));
+    debug_log("cnt=%u U=%f C=%.1fuF\n", cnt, Vfloat(u), result.capacitance_pF / 1e6f);
 }
 
 static void cap_esr(unsigned int p0, unsigned int p1, bool discharge)
