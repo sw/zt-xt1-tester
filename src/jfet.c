@@ -1,5 +1,3 @@
-#include <math.h>
-
 #include "adc.h"
 #include "component.h"
 #include "debug.h"
@@ -13,91 +11,16 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
 
     debug_log("%s(%u, %u, %u)\n", __FUNCTION__, pd, ps, pg);
 
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    /* Ugs = 0 -> should conduct */
+    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
     probe_configure(pd, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(ps, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     tim6_msleep(10);
     float ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
     float ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
-    adc_average(channels[ps], 100); /* result thrown away */
     debug_log("Ug=%.3fV Ud=%.3fV\n", ug, ud);
     float id = (5.0f - ud) / (680.0f + self_adjust_vals.rp) * 1e3f;
     debug_log("Id = (5V - %.3fV) / (680ohm + %.0fohm) = %.3fmA\n", ud, self_adjust_vals.rp, id);
-    if ((ug < 0.3f) || (ug > 1.3f))
-    {
-        debug_log("Bad Ug\n");
-        return false;
-    }
-    if (id < 0.1f)
-    {
-        debug_log("Bad Id\n");
-        return false;
-    }
-
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    tim6_msleep(10);
-    ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
-    adc_average(channels[pd], 100); /* result thrown away */
-    float us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
-    debug_log("Ug=%.3fV Us=%.3fV\n", ug, us);
-    float is = us / (680.0f + self_adjust_vals.rd) * 1e3f;
-    debug_log("Is = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", us, self_adjust_vals.rd, is);
-    if (ug < 4.5f)
-    {
-        debug_log("Bad Ug\n");
-        return false;
-    }
-    if (is < 0.1f)
-    {
-        debug_log("Bad Is\n");
-        return false;
-    }
-    result.current_mA = is;
-
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-    probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    tim6_msleep(10);
-    ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
-    adc_average(channels[pd], 100); /* result thrown away */
-    us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
-    debug_log("Ug=%.3fV Us=%.3fV\n", ug, us);
-    is = us / (680.0f + self_adjust_vals.rd) * 1e3f;
-    debug_log("Is = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", us, self_adjust_vals.rd, is);
-    if (ug > 0.5f)
-    {
-        debug_log("Bad Ug\n");
-        return false;
-    }
-    if (is * 2.0f > result.current_mA)
-    {
-        debug_log("Bad Is\n");
-        return false;
-    }
-    result.jfet_ug = us;
-
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-    probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-    tim6_msleep(10);
-    adc_average(channels[pg], 100); /* result thrown away */
-    adc_average(channels[pd], 100); /* result thrown away */
-    us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
-    if (result.jfet_ug < 0.3f)
-    {
-        result.jfet_ug = us;
-    }
-
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-    probe_configure(pd, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    probe_configure(ps, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(10);
-    ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
-    ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
-    adc_average(channels[ps], 100); /* result thrown away */
-    id = (5.0f - ud) / (680.0f + self_adjust_vals.rp) * 1e3f;
     if (ug > 0.25f)
     {
         debug_log("Bad Ug\n");
@@ -110,20 +33,43 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
     }
     result.current_mA = id;
 
+    /* positive Ugs -> check for diode voltage drop */
     probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    probe_configure(ps, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(pd, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(ps, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     tim6_msleep(10);
     ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
-    adc_average(channels[pd], 100); /* result thrown away */
-    us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
-    is = (5.0f - us) / (680.0f + self_adjust_vals.rp) * 1e3f;
+    ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
+    debug_log("Ug=%.3fV Ud=%.3fV\n", ug, ud);
+    id = (5.0f - ud) / (680.0f + self_adjust_vals.rp) * 1e3f;
+    debug_log("Id = (5V - %.3fV) / (680ohm + %.0fohm) = %.3fmA\n", ud, self_adjust_vals.rp, id);
     if ((ug < 0.3f) || (ug > 1.3f))
     {
         debug_log("Bad Ug\n");
         return false;
     }
-    if (is < 0.1f)
+    if (id < 0.1f)
+    {
+        debug_log("Bad Id\n");
+        return false;
+    }
+
+    /* swap drain and source */
+    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    probe_configure(ps, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    tim6_msleep(10);
+    ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
+    float us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
+    debug_log("Ug=%.3fV Us=%.3fV\n", ug, us);
+    float is = (5.0f - us) / (680.0f + self_adjust_vals.rp) * 1e3f;
+    debug_log("Is = (5V - %.3fV) / (680ohm + %.0fohm) = %.3fmA\n", us, self_adjust_vals.rp, is);
+    if ((ug < 0.3f) || (ug > 1.3f))
+    {
+        debug_log("Bad Ug\n");
+        return false;
+    }
+    if ((is < 0.1f) || (is > result.current_mA * 2.0f))
     {
         debug_log("Bad Is\n");
         return false;
@@ -131,28 +77,20 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
 
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(1);
-    ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
-    us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    float uds0 = ud - us;
+    tim6_msleep(10);
+    float ugd = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
 
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(ps, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(1);
-    ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
-    us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    float uds1 = ud - us;
+    tim6_msleep(10);
+    float ugs = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
 
-    if (fabsf(uds1) < fabsf(uds0))
+    debug_log("Ugd=%.3f Ugs=%.3f\n", ugd, ugs);
+    if (ugs > ugd)
     {
+        debug_log("Drain/source swapped\n");
         return false;
     }
 
@@ -160,8 +98,6 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
     probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(ps, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     tim6_msleep(1);
-    adc_average(channels[pg], 100); /* result thrown away */
-    adc_average(channels[pd], 100); /* result thrown away */
     us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
 
     probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
@@ -171,6 +107,22 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
     if (6.0f < result.current_mA)
     {
         result.current_mA = us / self_adjust_vals.rd * 1e3f;
+    }
+
+    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+    probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(ps, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    tim6_msleep(10);
+    result.jfet_ug = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
+
+    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+    probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+    tim6_msleep(10);
+    us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
+    if (result.jfet_ug < 0.3f)
+    {
+        result.jfet_ug = us;
     }
 
     debug_log("Found n-channel JFET!\n");
@@ -188,7 +140,7 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
 
     debug_log("%s(%u, %u, %u)\n", __FUNCTION__, pd, pg, ps);
 
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
     probe_configure(pd, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     probe_configure(ps, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
     tim6_msleep(10);
@@ -197,6 +149,28 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
     float us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
     debug_log("Ug=%.3fV Ud=%.3fV Us=%.3fV\n", ug, ud, us);
     float id = ud / (680.0f + self_adjust_vals.rd) * 1e3f;
+    debug_log("Id = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", ud, self_adjust_vals.rd, id);
+    if (us - ug > 0.25f)
+    {
+        debug_log("Bad Us-Ug\n");
+        return false;
+    }
+    if (id < 0.1f)
+    {
+        debug_log("Bad Id\n");
+        return false;
+    }
+    result.current_mA = id;
+
+    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
+    probe_configure(pd, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    probe_configure(ps, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+    tim6_msleep(10);
+    ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
+    ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
+    us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
+    debug_log("Ug=%.3fV Ud=%.3fV Us=%.3fV\n", ug, ud, us);
+    id = ud / (680.0f + self_adjust_vals.rd) * 1e3f;
     debug_log("Id = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", ud, self_adjust_vals.rd, id);
     if (((us - ug) < 0.3f) || ((us - ug) > 1.3f))
     {
@@ -210,18 +184,17 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
     }
 
     probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-    probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    probe_configure(ps, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
     tim6_msleep(10);
     ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
-    adc_average(channels[pd], 100); /* result thrown away */
     us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
     debug_log("Ug=%.3fV Us=%.3fV\n", ug, us);
-    float is = (5.0f - us) / (680.0f + self_adjust_vals.rp) * 1e3f;
-    debug_log("Is = (5V - %.3fV) / (680ohm + %.0fohm) = %.3fmA\n", us, self_adjust_vals.rp, is);
-    if (ug > 0.5f)
+    float is = us / (680.0f + self_adjust_vals.rd) * 1e3f;
+    debug_log("Is = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", us, self_adjust_vals.rd, is);
+    if (((us - ug) < 0.1f) || ((us - ug) > 1.3f))
     {
-        debug_log("Bad Ug\n");
+        debug_log("Bad Us-Ug\n");
         return false;
     }
     if (is < 0.1f)
@@ -229,102 +202,31 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
         debug_log("Bad Is\n");
         return false;
     }
-    result.current_mA = is;
 
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    tim6_msleep(10);
-    ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
-    adc_average(channels[pd], 100); /* result thrown away */
-    us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
-    is = (5.0f - us) / (680.0f + self_adjust_vals.rp) * 1e3f;
-    if (ug < 4.5f)
-    {
-        debug_log("Bad Ug\n");
-        return false;
-    }
-    if (is * 2.0f > result.current_mA)
-    {
-        debug_log("Bad Is\n");
-        return false;
-    }
-    result.jfet_ug = 5.0f - us;
-
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    tim6_msleep(10);
-    adc_average(channels[pg], 100); /* result thrown away */
-    adc_average(channels[pd], 100); /* result thrown away */
-    us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
-    if (result.jfet_ug < 0.3f)
-    {
-        result.jfet_ug = us;
-    }
-
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
-    probe_configure(pd, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    probe_configure(ps, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(10);
-    ug = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
-    ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
-    adc_average(channels[ps],100);
-    id = ud / (680.0f + self_adjust_vals.rd) * 1e3f;
-    debug_log("Id = %.3fV / (680ohm + %.0fohm) = %.3fmA\n", ud, self_adjust_vals.rd, id);
-    if (ug < 4.75f)
-    {
-        debug_log("Bad Ug\n");
-        return false;
-    }
-    if (id < 0.1f)
-    {
-        debug_log("Bad Is\n");
-        return false;
-    }
-    result.current_mA = id;
-
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_LO);
-    probe_configure(ps, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     tim6_msleep(10);
-    adc_average(channels[pg], 100); /* result thrown away */
-    adc_average(channels[pd], 100); /* result thrown away */
-    adc_average(channels[ps], 100); /* result thrown away */
+    float ugd = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
 
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     probe_configure(ps, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(1);
-    ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
-    us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
+    probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
+    tim6_msleep(10);
+    float ugs = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
 
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    float uds0 = ud - us;
-    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(1);
-    ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
-    us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
-    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    float uds1 = ud - us;
-    if (fabsf(uds1) > fabsf(uds0))
+    debug_log("Ugd=%.3f Ugs=%.3f\n", ugd, ugs);
+    if (ugs > ugd)
     {
+        debug_log("Drain/source swapped\n");
         return false;
     }
 
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    probe_configure(ps, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(ps, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
     tim6_msleep(1);
-    adc_average(channels[pg], 100); /* result thrown away */
     ud = adc_average(channels[pd], 100) * (5.0f / 4095.0f);
-    adc_average(channels[ps], 100); /* result thrown away */
 
     probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
@@ -333,6 +235,22 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
     if (6.0f < result.current_mA)
     {
         result.current_mA = ud / self_adjust_vals.rd * 1e3f;
+    }
+
+    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(ps, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
+    tim6_msleep(10);
+    result.jfet_ug = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
+
+    probe_configure(pg, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
+    probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_DRV_HI);
+    tim6_msleep(10);
+    us = adc_average(channels[ps], 100) * (5.0f / 4095.0f);
+    if (result.jfet_ug < 0.3f)
+    {
+        result.jfet_ug = us;
     }
 
     debug_log("Found p-channel JFET!\n");
