@@ -7,6 +7,12 @@
 
 enum : uint8_t
 {
+    FAMILY_DS18S20 = 0x10,
+    FAMILY_DS18B20 = 0x28,
+};
+
+enum : uint8_t
+{
     COMMAND_ROM_READ        = 0x33,
     COMMAND_T_CONVERT       = 0x44,
     COMMAND_SCRATCHPAD_READ = 0xBE,
@@ -93,6 +99,17 @@ static uint_fast8_t ds18b20_read_byte(void)
     return byte;
 }
 
+static void crc_update(uint_fast8_t *crc, uint_fast8_t input)
+{
+    for (uint_fast8_t i = 8; i; i--)
+    {
+        uint_fast8_t mix = (*crc ^ input) & 0x01;
+        *crc >>= 1;
+        if (mix) { *crc ^= 0x8C; }
+        input >>= 1;
+    }
+}
+
 bool ds18b20_detect(void)
 {
     static const unsigned int probes[][3] =
@@ -118,17 +135,24 @@ bool ds18b20_detect(void)
         ds18b20_write_byte(COMMAND_ROM_READ);
         result.ds18b20_rom_code[0] = ds18b20_read_byte();
         /* correct family code? */
-        if (result.ds18b20_rom_code[0] == 0x28)
+        if (   (result.ds18b20_rom_code[0] == FAMILY_DS18S20)
+            || (result.ds18b20_rom_code[0] == FAMILY_DS18B20) )
         {
+            uint_fast8_t crc = 0;
+            crc_update(&crc, result.ds18b20_rom_code[0]);
             for (int j = 1; j < 8; j++)
             {
                 result.ds18b20_rom_code[j] = ds18b20_read_byte();
+                crc_update(&crc, result.ds18b20_rom_code[j]);
             }
-
             ds18b20_init();
             ds18b20_write_byte(COMMAND_ROM_SKIP);
             ds18b20_write_byte(COMMAND_T_CONVERT);
             __enable_irq();
+            if (crc != 0)
+            {
+                return false;
+            }
             result.component = COMPONENT_DS18B20;
             result.temperature = -100.0f;
             return true;
@@ -140,9 +164,9 @@ bool ds18b20_detect(void)
 
 bool ds18b20_read(void)
 {
-    union
+    union __attribute__((packed, aligned(1)))
     {
-        uint8_t byte[2];
+        uint8_t byte[9];
         int16_t temperature;
     } buf;
 
@@ -151,18 +175,28 @@ bool ds18b20_read(void)
     {
         ds18b20_write_byte(COMMAND_ROM_SKIP);
         ds18b20_write_byte(COMMAND_SCRATCHPAD_READ);
-        buf.byte[0] = ds18b20_read_byte();
-        buf.byte[1] = ds18b20_read_byte();
+        uint_fast8_t crc = 0;
+        for (uint_fast8_t i = 0; i < sizeof(buf); i++)
+        {
+            buf.byte[i] = ds18b20_read_byte();
+            crc_update(&crc, buf.byte[i]);
+        }
 
         if (ds18b20_init())
         {
             ds18b20_write_byte(COMMAND_ROM_SKIP);
             ds18b20_write_byte(COMMAND_T_CONVERT);
             __enable_irq();
-            /* TODO: could FFFF be a valid temperature just below 0˚C? -> better check CRC instead */
-            if ((buf.byte[0] != 0xFF) || (buf.byte[1] != 0xFF))
+            if (crc == 0)
             {
-                result.temperature = buf.temperature * 0.0625f;
+                if (result.ds18b20_rom_code[0] == FAMILY_DS18S20)
+                {
+                    result.temperature = (buf.temperature >> 1) + 0.75f - buf.byte[6] / 16.0f;
+                }
+                else
+                {
+                    result.temperature = buf.temperature * 0.0625f;
+                }
                 return true;
             }
         }

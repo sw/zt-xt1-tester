@@ -1,6 +1,6 @@
 # ZT-XT1 component tester alternative firmware
 Alternative firmware for the component tester MCU in the Zotek/Zoyi ZT-XT1. Not affiliated with Zotek Instruments Co., Ltd.
-Use at your own risk. At the moment, this firmware offers no advantage over the official one.
+Use at your own risk.
 
 Note: this is intended to be used as a submodule of the [main DMM firmware](https://github.com/sw/zt-xt1-dmm).
 
