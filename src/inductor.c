@@ -19,55 +19,34 @@ float inductor_comp(unsigned int p0, unsigned int p1)
 #endif
     debug_log("%s(%u, %u)\n", __FUNCTION__, p0, p1);
 
-    result.resistance = fabsf(result.resistance);
-
+    probe_discharge(p0, p1);
     probe_configure(p0, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     const uint_fast8_t vref = 6;
     comp_prepare(p0, vref);
-    tim6_msleep(10);
+    tim6_msleep(1);
 
     /* drive p1 high */
-    static const uint_fast32_t timeout = 48000000 / 5;
+    const uint_fast32_t timeout = 48000000 / 5;
     uint32_t cnt = comp_start(direct_gpios[p1], direct_pins[p1], timeout);
+    probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     if (cnt >= timeout)
     {
-        cnt = 0;
+        return 0.0f;
     }
-
-    /* drive p1 low */
-#ifdef __ARM_EABI__
-    direct_gpios[p1]->PBC = direct_pins[p1];
-#else
-    probe_configure(p1, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-#endif
-
-    /* should probably use rp/rd */
-    float l1 = logf(1.0f - (result.resistance + 30.0f) * (vref / 64.0f / 15.0f));
-    float l2 = -(int)cnt / 48.0f * (result.resistance + 30.0f) / l1;
-    debug_log("cnt=%u l2=%.1f\n", cnt, l2);
-
 #ifndef __ARM_EABI__
     /* hack for simulation: avoid misclassing resistors as inductors */
-    if (l2 < 180.0f)
+    if (cnt < 50)
     {
         return 0.0f;
     }
 #endif
 
-    if (l2 < 265.0f)
-    {
-        return 0.0000051962050f * powf(l2, 4.0f) - 0.0046979402f * powf(l2, 3.0f) + 1.5850439f * powf(l2, 2.0f) - 235.26521f * l2 + 12937.127f;
-    }
-    else
-    {
-        if (1500.0f < l2)
-        {
-            return l2;
-        }
-        /* in the simulation, this makes it worse */
-        return -0.000055182136f * powf(l2, 2.0f) + 1.3664441f * l2 - 260.50504f;
-    }
+    /* L = -t_stop * R_total / ln(1 - (U_ref * R_total) / (5V * R_shunt)) */
+    const float R_shunt = self_adjust_vals.rd;
+    const float R_total = self_adjust_vals.rp + result.resistance + R_shunt;
+    debug_log("cnt=%u\n", cnt);
+    return cnt / -48.0f * R_total / logf(1.0f - vref / 64.0f * R_total / R_shunt);
 }
 
 bool inductor(void)

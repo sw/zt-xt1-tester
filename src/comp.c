@@ -70,7 +70,13 @@ uint_fast32_t comp_start(GPIO_Module *gpio, uint_fast16_t pin, uint_fast32_t tim
     COMP_Enable(COMP_CTRL_EN_DISABLE);
     TIM_Enable(TIM3, DISABLE);
 
-    return (tim3_expiry << 16) + TIM3->CNT;
+    uint_fast32_t ticks = (tim3_expiry << 16) + TIM3->CNT;
+    /* interrupt latency */
+    if (ticks <= 42)
+    {
+        return 0;
+    }
+    return ticks - 42;
 }
 
 void COMP_IRQHandler(void)

@@ -8,7 +8,19 @@
 #include "probe.h"
 
 #ifdef __ARM_EABI__
-#include "gpio.h"
+#include "n32g031_gpio.h"
+
+static void probe_gpio_init(GPIO_Module *gpio, uint_fast16_t pin, uint_fast32_t mode)
+{
+  GPIO_InitType GPIO_InitStruct;
+  GPIO_InitStruct.GPIO_Alternate = GPIO_NO_AF;
+  GPIO_InitStruct.GPIO_Speed = GPIO_SPEED_HIGH;
+  GPIO_InitStruct.GPIO_Current = GPIO_DC_HIGH;
+  GPIO_InitStruct.Pin = pin;
+  GPIO_InitStruct.GPIO_Mode = mode;
+  GPIO_InitStruct.GPIO_Pull = GPIO_NO_PULL;
+  GPIO_InitPeripheral(gpio, &GPIO_InitStruct);
+}
 
 void probe_configure(uint_fast8_t probe, probe_mode_t direct, probe_mode_t r680, probe_mode_t r470k)
 {
@@ -16,70 +28,70 @@ void probe_configure(uint_fast8_t probe, probe_mode_t direct, probe_mode_t r680,
     {
         if (direct == PROBE_ANALOG)
         {
-            gpio_init(GPIOA, GPIO_PIN_1, GPIO_MODE_ANALOG, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_1, GPIO_MODE_ANALOG);
         }
         else
         {
             assert((direct == PROBE_DRV_LO) || (direct == PROBE_DRV_HI));
             GPIO_WriteBit(GPIOA, GPIO_PIN_1, direct == PROBE_DRV_HI);
-            gpio_init(GPIOA, GPIO_PIN_1, GPIO_MODE_OUTPUT_PP, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_1, GPIO_MODE_OUTPUT_PP);
         }
 
         if (r680 == PROBE_ANALOG)
         {
-            gpio_init(GPIOA, GPIO_PIN_0, GPIO_MODE_ANALOG, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_0, GPIO_MODE_ANALOG);
         }
         else
         {
             assert((r680 == PROBE_DRV_LO) || (r680 == PROBE_DRV_HI));
             GPIO_WriteBit(GPIOA, GPIO_PIN_0, r680 == PROBE_DRV_HI);
-            gpio_init(GPIOA, GPIO_PIN_0, GPIO_MODE_OUTPUT_PP, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_0, GPIO_MODE_OUTPUT_PP);
         }
 
         if (r470k == PROBE_ANALOG)
         {
-            gpio_init(GPIOA, GPIO_PIN_2, GPIO_MODE_ANALOG, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_2, GPIO_MODE_ANALOG);
         }
         else
         {
             assert((r470k == PROBE_DRV_LO) || (r470k == PROBE_DRV_HI));
             GPIO_WriteBit(GPIOA, GPIO_PIN_2, r470k == PROBE_DRV_HI);
-            gpio_init(GPIOA, GPIO_PIN_2, GPIO_MODE_OUTPUT_PP, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_2, GPIO_MODE_OUTPUT_PP);
         }
     }
     else if (probe == 1)
     {
         if (direct == PROBE_ANALOG)
         {
-            gpio_init(GPIOA, GPIO_PIN_3, GPIO_MODE_ANALOG, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_3, GPIO_MODE_ANALOG);
         }
         else
         {
             assert((direct == PROBE_DRV_LO) || (direct == PROBE_DRV_HI));
             GPIO_WriteBit(GPIOA, GPIO_PIN_3, direct == PROBE_DRV_HI);
-            gpio_init(GPIOA, GPIO_PIN_3, GPIO_MODE_OUTPUT_PP, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_3, GPIO_MODE_OUTPUT_PP);
         }
 
         if (r680 == PROBE_ANALOG)
         {
-            gpio_init(GPIOA, GPIO_PIN_4, GPIO_MODE_ANALOG, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_4, GPIO_MODE_ANALOG);
         }
         else
         {
             assert((r680 == PROBE_DRV_LO) || (r680 == PROBE_DRV_HI));
             GPIO_WriteBit(GPIOA, GPIO_PIN_4, r680 == PROBE_DRV_HI);
-            gpio_init(GPIOA, GPIO_PIN_4, GPIO_MODE_OUTPUT_PP, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_4, GPIO_MODE_OUTPUT_PP);
         }
 
         if (r470k == PROBE_ANALOG)
         {
-            gpio_init(GPIOA, GPIO_PIN_5, GPIO_MODE_ANALOG, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_5, GPIO_MODE_ANALOG);
         }
         else
         {
             assert((r470k == PROBE_DRV_LO) || (r470k == PROBE_DRV_HI));
             GPIO_WriteBit(GPIOA, GPIO_PIN_5, r470k == PROBE_DRV_HI);
-            gpio_init(GPIOA, GPIO_PIN_5, GPIO_MODE_OUTPUT_PP, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_5, GPIO_MODE_OUTPUT_PP);
         }
     }
     else
@@ -87,35 +99,35 @@ void probe_configure(uint_fast8_t probe, probe_mode_t direct, probe_mode_t r680,
         assert(probe == 2);
         if (direct == PROBE_ANALOG)
         {
-            gpio_init(GPIOA, GPIO_PIN_7, GPIO_MODE_ANALOG, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_7, GPIO_MODE_ANALOG);
         }
         else
         {
             assert((direct == PROBE_DRV_LO) || (direct == PROBE_DRV_HI));
             GPIO_WriteBit(GPIOA, GPIO_PIN_7, direct == PROBE_DRV_HI);
-            gpio_init(GPIOA, GPIO_PIN_7, GPIO_MODE_OUTPUT_PP, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_7, GPIO_MODE_OUTPUT_PP);
         }
 
         if (r680 == PROBE_ANALOG)
         {
-            gpio_init(GPIOA, GPIO_PIN_6, GPIO_MODE_ANALOG, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_6, GPIO_MODE_ANALOG);
         }
         else
         {
             assert((r680 == PROBE_DRV_LO) || (r680 == PROBE_DRV_HI));
             GPIO_WriteBit(GPIOA, GPIO_PIN_6, r680 == PROBE_DRV_HI);
-            gpio_init(GPIOA, GPIO_PIN_6, GPIO_MODE_OUTPUT_PP, GPIO_NO_PULL);
+            probe_gpio_init(GPIOA, GPIO_PIN_6, GPIO_MODE_OUTPUT_PP);
         }
 
         if (r470k == PROBE_ANALOG)
         {
-            gpio_init(GPIOB, GPIO_PIN_1, GPIO_MODE_ANALOG, GPIO_NO_PULL);
+            probe_gpio_init(GPIOB, GPIO_PIN_1, GPIO_MODE_ANALOG);
         }
         else
         {
             assert((r470k == PROBE_DRV_LO) || (r470k == PROBE_DRV_HI));
             GPIO_WriteBit(GPIOB, GPIO_PIN_1, r470k == PROBE_DRV_HI);
-            gpio_init(GPIOB, GPIO_PIN_1, GPIO_MODE_OUTPUT_PP, GPIO_NO_PULL);
+            probe_gpio_init(GPIOB, GPIO_PIN_1, GPIO_MODE_OUTPUT_PP);
         }
     }
 }
@@ -222,48 +234,33 @@ bool probe_all_shorted(void)
 
 void probe_calibrate_resistance(void)
 {
-    static const unsigned int channels[3] = {1, 3, 7};
-    static const unsigned int probes[][3] =
+    static const uint_least8_t channels[3] = {1, 3, 7};
+    static const uint_least8_t probes[][3] =
     {
-        {0, 1, 2},
-        {0, 2, 1},
-        {1, 0, 2},
-        {1, 2, 0},
-        {2, 0, 1},
-        {2, 1, 0},
+        {0, 1, 2}, {0, 2, 1}, {1, 0, 2}, {1, 2, 0}, {2, 0, 1}, {2, 1, 0}
     };
+    const uint_fast8_t n = sizeof(probes) / sizeof(probes[0]);
 
-    float r680_sum = 0.0f;
-    float r0_sum   = 0.0f;
-    for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
+    int32_t ul_sum = 0;
+    int32_t uh_sum = 0;
+    for (int i = 0; i < n; i++)
     {
         probe_configure(probes[i][0], PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
         probe_configure(probes[i][1], PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
         probe_configure(probes[i][2], PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
         tim6_msleep(1);
-        r680_sum += adc_average(channels[probes[i][2]], 500);
-        probe_configure(probes[i][0], PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
+        ul_sum += ADC_MEASURE(channels[probes[i][2]]);
+        probe_configure(probes[i][0], PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
+        probe_configure(probes[i][1], PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
         tim6_msleep(1);
-        r0_sum += adc_average(channels[probes[i][2]], 500);
+        uh_sum += ADC_MEASURE(channels[probes[i][2]]);
     }
-    probe_configure(0, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(1, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(2, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-
-    float r0_avg   = r0_sum   / 6.0f;
-    float r680_avg = r680_sum / 6.0f;
-    float rd = 680.0f / (4095.0f / r680_avg - 4095.0f / r0_avg);
-    float rp = rd * (4095.0f - r0_avg) / r0_avg;
-
-    if ((fabsf(rd) < 30.0f) && (fabsf(rp) < 30.0f))
+    float rl = 680.0f * ul_sum             / (uh_sum - ul_sum);
+    float rh = 680.0f * (Vcc * n - uh_sum) / (uh_sum - ul_sum);
+    if ((fabsf(rl) < 30.0f) && (fabsf(rh) < 30.0f))
     {
-        self_adjust_vals.rp = rp;
-        self_adjust_vals.rd = rd;
-    }
-    else
-    {
-        self_adjust_vals.rp = 15.0f;
-        self_adjust_vals.rd = 15.0f;
+        self_adjust_vals.rp = rh;
+        self_adjust_vals.rd = rl;
     }
 }
 

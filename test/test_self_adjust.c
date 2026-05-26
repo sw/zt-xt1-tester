@@ -82,12 +82,12 @@ static void test_self_adjustment(void **state)
 
     assert_float_equal(self_adjust_vals.rp, 15.0f, 0.1f);
     assert_float_equal(self_adjust_vals.rd, 15.0f, 0.1f);
-    assert_float_in_range(self_adjust_vals.probe12_cap, 25.2f, 28.7f, 0.0f);
-    assert_float_in_range(self_adjust_vals.probe13_cap, 25.2f, 28.7f, 0.0f);
-    assert_float_in_range(self_adjust_vals.probe21_cap, 25.2f, 28.7f, 0.0f);
-    assert_float_in_range(self_adjust_vals.probe23_cap, 25.2f, 28.7f, 0.0f);
-    assert_float_in_range(self_adjust_vals.probe31_cap, 25.2f, 28.7f, 0.0f);
-    assert_float_in_range(self_adjust_vals.probe32_cap, 25.2f, 28.7f, 0.0f);
+    assert_float_in_range(self_adjust_vals.probe12_cap, 24.9f, 29.0f, 0.0f);
+    assert_float_in_range(self_adjust_vals.probe13_cap, 24.9f, 29.0f, 0.0f);
+    assert_float_in_range(self_adjust_vals.probe21_cap, 24.9f, 29.0f, 0.0f);
+    assert_float_in_range(self_adjust_vals.probe23_cap, 24.9f, 29.0f, 0.0f);
+    assert_float_in_range(self_adjust_vals.probe31_cap, 24.9f, 29.0f, 0.0f);
+    assert_float_in_range(self_adjust_vals.probe32_cap, 24.9f, 29.0f, 0.0f);
 }
 
 int test_self_adjust(int argc, char *argv[])

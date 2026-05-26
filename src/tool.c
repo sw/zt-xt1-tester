@@ -53,6 +53,7 @@ void tool_do(void)
                     if (probe_all_shorted())
                     {
                         self_adjust_step = SELF_ADJUST_PROBES_RESISTANCE;
+                        self_adjust_default();
                     }
                     ((self_adjust_state_t *)uart_frame_tx.payload)->step = self_adjust_step;
                     ((self_adjust_state_t *)uart_frame_tx.payload)->val  = self_adjust_vals;

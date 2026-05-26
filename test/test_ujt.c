@@ -43,7 +43,7 @@ static void test_one(void **state)
 
     assert_uint_equal(result_p->component, COMPONENT_UJT);
     assert_float_equal(result_p->bjt_ube, 0.87f, 0.01f);
-    assert_float_equal(result_p->resistance, 6137.0f, 1.0f);
+    assert_float_equal(result_p->resistance, 6139.0f, 1.0f);
     assert_uint_equal(result_p->probes[0], probes[i][0]);
     assert_uint_equal(result_p->probes[2], probes[i][1]);
     assert_uint_equal(result_p->probes[1], probes[i][2]);
