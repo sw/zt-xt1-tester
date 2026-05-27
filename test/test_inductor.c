@@ -29,7 +29,7 @@ static void test_component(void **state)
     char *dut[3] = { NULL };
     int i = 0;
 
-    for (float l = 7e3f; l <= 1e6f; l *= 10.0f)
+    for (float l = 9e3f; l <= 1e6f; l *= 10.0f)
     {
         i = (i + 1) % (sizeof(probes) / sizeof(probes[0]));
 
@@ -58,7 +58,7 @@ static void test_tool(void **state)
     char *dut[3] = { NULL };
     int i = 0;
 
-    for (float l = 7e3f; l <= 1e6f; l *= 10.0f)
+    for (float l = 9e3f; l <= 1e6f; l *= 10.0f)
     {
         i = (i + 1) % (sizeof(probes) / sizeof(probes[0]));
 

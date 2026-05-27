@@ -5,9 +5,9 @@
 #include "probe.h"
 #include "timer.h"
 
-static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
+static bool jfet_n(unsigned int pg, unsigned int pd, unsigned int ps)
 {
-    static const unsigned int channels[3] = {1, 3, 7};
+    static const uint_least8_t channels[3] = {1, 3, 7};
 
     debug_log("%s(%u, %u, %u)\n", __FUNCTION__, pd, ps, pg);
 
@@ -75,25 +75,6 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
         return false;
     }
 
-    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(10);
-    float ugd = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
-
-    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
-    probe_configure(ps, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(10);
-    float ugs = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
-
-    debug_log("Ugd=%.3f Ugs=%.3f\n", ugd, ugs);
-    if (ugs > ugd)
-    {
-        debug_log("Drain/source swapped\n");
-        return false;
-    }
-
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
     probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(ps, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
@@ -134,9 +115,9 @@ static bool jfet_n(unsigned int pd, unsigned int ps, unsigned int pg)
     return true;
 }
 
-static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
+static bool jfet_p(unsigned int pg, unsigned int pd, unsigned int ps)
 {
-    static const unsigned int channels[3] = {1, 3, 7};
+    static const uint_least8_t channels[3] = {1, 3, 7};
 
     debug_log("%s(%u, %u, %u)\n", __FUNCTION__, pd, pg, ps);
 
@@ -203,25 +184,6 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
         return false;
     }
 
-    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    probe_configure(pd, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(ps, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(10);
-    float ugd = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
-
-    probe_configure(pg, PROBE_ANALOG, PROBE_DRV_LO, PROBE_ANALOG);
-    probe_configure(ps, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
-    probe_configure(pd, PROBE_ANALOG, PROBE_ANALOG, PROBE_ANALOG);
-    tim6_msleep(10);
-    float ugs = adc_average(channels[pg], 100) * (5.0f / 4095.0f);
-
-    debug_log("Ugd=%.3f Ugs=%.3f\n", ugd, ugs);
-    if (ugs > ugd)
-    {
-        debug_log("Drain/source swapped\n");
-        return false;
-    }
-
     probe_configure(pg, PROBE_ANALOG, PROBE_DRV_HI, PROBE_ANALOG);
     probe_configure(pd, PROBE_DRV_LO, PROBE_ANALOG, PROBE_ANALOG);
     probe_configure(ps, PROBE_DRV_HI, PROBE_ANALOG, PROBE_ANALOG);
@@ -264,14 +226,11 @@ static bool jfet_p(unsigned int pd, unsigned int pg, unsigned int ps)
 
 bool jfet(void)
 {
-    static const unsigned int probes[6][3] =
+    static const uint_least8_t probes[][3] =
     {
         {0, 1, 2},
-        {0, 2, 1},
         {1, 0, 2},
-        {1, 2, 0},
         {2, 0, 1},
-        {2, 1, 0},
     };
 
     for (int i = 0; i < sizeof(probes) / sizeof(probes[0]); i++)
